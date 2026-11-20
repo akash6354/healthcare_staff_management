@@ -32,7 +32,7 @@ async function signIn(page, email, secret) {
     await page.locator('input[autocomplete=one-time-code]').fill(totp(secret));
     await page.locator('button[type=submit]').click();
   }
-  await page.waitForSelector('nav[aria-label=Main]', { timeout: 15000 });
+  await page.waitForSelector('aside nav', { timeout: 15000 });
   await page.waitForTimeout(1200);
 }
 

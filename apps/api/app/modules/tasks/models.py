@@ -246,3 +246,19 @@ __all__ = [
     "TaskTemplate",
     "Text",
 ]  # fmt: skip
+
+
+class ProofPurge(IdMixin, TenantMixin, Base):
+    """Retention (decision H8): the full photo was deleted; the thumbnail and record stay.
+
+    Append-only, so task_proofs itself stays immutable."""
+
+    __tablename__ = "proof_purges"
+    __tenant_args__ = (
+        tenant_fk("proof_id", "task_proofs"),
+        UniqueConstraint("hospital_id", "proof_id"),
+    )
+    proof_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    purged_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
+    )

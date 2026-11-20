@@ -1,8 +1,8 @@
 import uuid
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
 
 from app.core.schemas import In, Out
 from app.modules.tasks.models import (
@@ -14,7 +14,10 @@ from app.modules.tasks.models import (
     TaskStatus,
 )
 
-I18n = dict[Literal["en", "kn", "hi"], str]
+Short = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+Long = Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000)]
+I18n = dict[Literal["en", "kn", "hi"], Short]
+I18nLong = dict[Literal["en", "kn", "hi"], Long]
 
 
 class ChecklistItem(In):
@@ -27,7 +30,7 @@ class ChecklistItem(In):
 class TemplateIn(In):
     desk_id: uuid.UUID
     title_i18n: I18n
-    instructions_i18n: I18n = {}
+    instructions_i18n: I18nLong = {}
     checklist: list[ChecklistItem] = Field(default_factory=list, max_length=30)
     schedule_kind: ScheduleKind
     times: list[str] = Field(default_factory=list, max_length=48)
@@ -63,7 +66,7 @@ class TemplateIn(In):
 
 class TemplatePatch(In):
     title_i18n: I18n | None = None
-    instructions_i18n: I18n | None = None
+    instructions_i18n: I18nLong | None = None
     checklist: list[ChecklistItem] | None = None
     times: list[str] | None = None
     weekdays: list[int] | None = None
@@ -97,7 +100,7 @@ class TemplateOut(Out):
 class OneTimeTaskIn(In):
     desk_id: uuid.UUID
     title_i18n: I18n
-    instructions_i18n: I18n = {}
+    instructions_i18n: I18nLong = {}
     checklist: list[ChecklistItem] = Field(default_factory=list, max_length=30)
     due_at: datetime
     requires_before_photo: bool = True

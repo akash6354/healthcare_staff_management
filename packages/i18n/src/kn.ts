@@ -201,4 +201,9 @@ export const kn: Record<MessageKey, string> = {
   'role.requester': 'ವಿನಂತಿದಾರ',
   'role.vendor_user': 'ಮಾರಾಟಗಾರ',
   'role.quality_coordinator': 'ಗುಣಮಟ್ಟ ಸಂಯೋಜಕ',
+  'common.yes': 'ಹೌದು',
+  'common.no': 'ಇಲ್ಲ',
+  'common.no_patient_details': 'ರೋಗಿಯ ವಿವರಗಳನ್ನು ಬರೆಯಬೇಡಿ.',
+  'login.delete_digit': 'ಕೊನೆಯ ಅಂಕಿ ಅಳಿಸಿ',
+  'nav.main': 'ಮುಖ್ಯ ಮೆನು',
 };

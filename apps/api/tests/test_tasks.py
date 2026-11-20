@@ -2,6 +2,7 @@
 approve/reject, plus guards, fake-work flags, SLA escalation, entrance QR attendance and the notice."""
 
 import io
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -14,7 +15,7 @@ from app.audit.service import verify_chain
 from app.core.db import tenant_session
 from app.modules.staff.models import Role, ScopeType
 from app.modules.tasks.models import Task
-from app.modules.tasks.service import sla_sweep, today_ist
+from app.modules.tasks.service import IST, sla_sweep, today_ist
 from tests.conftest import AuthedUser, Tenant, make_user
 
 
@@ -143,7 +144,8 @@ async def test_full_desk_task_flow(client, hospital_a: Tenant) -> None:
         "task.submit",
         "task.approve",
     ]
-    dash = (await client.get("/api/v1/dashboard/today", headers=s.md.headers)).json()
+    due_day = datetime.fromisoformat(task["due_at"]).astimezone(IST).date().isoformat()
+    dash = (await client.get(f"/api/v1/dashboard/today?day={due_day}", headers=s.md.headers)).json()
     assert dash["counts"]["done"] >= 1
     async with tenant_session(hospital_a.id) as db:
         assert (await verify_chain(db, hospital_a.id)).ok
@@ -372,3 +374,97 @@ async def test_photo_validation(client, hospital_a: Tenant) -> None:
             text("SELECT bytes FROM task_proofs WHERE id = :i"), {"i": ok.json()["id"]}
         )
     assert size <= 200 * 1024
+
+
+async def test_body_ids_are_scope_checked(client, hospital_a: Tenant) -> None:
+    """A department supervisor can't create tasks or roster people outside their department."""
+    s = await setup_desk(client, hospital_a)
+    other_dept = (
+        await client.post(
+            "/api/v1/departments",
+            json={"name": "Nursing", "kind": "clinical_unit"},
+            headers=s.admin.headers,
+        )
+    ).json()
+    other_desk = (await client.post("/api/v1/desks", json={
+        "branch_id": s.branch["id"], "department_id": other_dept["id"], "name": "Ward 3 Nurse Station", "code": "W3-NS",
+    }, headers=s.admin.headers)).json()  # fmt: skip
+    outsider = await make_user(hospital_a, Role.worker, department_id=uuid.UUID(other_dept["id"]))
+    shift = (await client.get("/api/v1/shifts", headers=s.admin.headers)).json()[0]
+
+    task = await client.post("/api/v1/tasks", headers=s.supervisor.headers, json={
+        "desk_id": other_desk["id"], "title_i18n": {"en": "Sneaky"},
+        "due_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+    })  # fmt: skip
+    assert task.status_code == 404
+
+    # claims its own department but puts an outsider on another department's desk
+    for user_id, desk_id in [
+        (str(outsider.id), s.desk["id"]),
+        (str(s.worker.id), other_desk["id"]),
+    ]:
+        r = await client.post("/api/v1/roster", headers=s.supervisor.headers, json={
+            "user_id": user_id, "shift_id": shift["id"], "work_date": today_ist().isoformat(),
+            "desk_id": desk_id, "department_id": s.dept["id"],
+        })  # fmt: skip
+        assert r.status_code in (403, 404), r.text
+
+
+async def test_cross_tenant_on_remaining_endpoints(
+    client, hospital_a: Tenant, hospital_b: Tenant
+) -> None:
+    """CLAUDE.md rule 2: every endpoint gets a cross-tenant check (404 for another hospital's ids)."""
+    s = await setup_desk(client, hospital_a)
+    a = s.admin.headers
+    tpl = (await client.post("/api/v1/task-templates", json={
+        "desk_id": s.desk["id"], "title_i18n": {"en": "Round"}, "schedule_kind": "daily", "times": ["09:00"],
+    }, headers=a)).json()  # fmt: skip
+    task = await one_time_task(client, s)
+    await client.post(f"/api/v1/tasks/{task['id']}/start", headers=s.worker.headers)
+    roster = (
+        await client.get(f"/api/v1/roster?from_date={today_ist()}&to_date={today_ist()}", headers=a)
+    ).json()[0]
+    device = (await client.post("/api/v1/devices", json={"label": "Ward phone"}, headers=a)).json()
+    notice = (await client.get("/api/v1/notice/current", headers=s.worker.headers)).json()
+    flag_id = str(uuid.uuid4())
+
+    b_admin = await make_user(hospital_b)
+    b_worker = await make_user(hospital_b, Role.worker)
+    b_ops = await make_user(hospital_b, Role.ops_manager)  # has task.verify, so the lookup runs
+    hb = b_admin.headers
+    checks = [
+        ("GET", f"/api/v1/task-templates/{tpl['id']}", hb, None),
+        ("PATCH", f"/api/v1/task-templates/{tpl['id']}", hb, {"active": False}),
+        ("DELETE", f"/api/v1/task-templates/{tpl['id']}", hb, None),
+        ("GET", f"/api/v1/tasks/{task['id']}/timeline", hb, None),
+        ("POST", f"/api/v1/tasks/{task['id']}/approve", b_ops.headers, {}),
+        ("POST", f"/api/v1/tasks/{task['id']}/cancel", hb, {"reason": "not mine"}),
+        ("POST", f"/api/v1/tasks/{task['id']}/submit", b_worker.headers, {"checklist": {}}),
+        ("DELETE", f"/api/v1/roster/{roster['id']}", hb, None),
+        ("POST", f"/api/v1/devices/{device['id']}/revoke", hb, None),
+        ("POST", f"/api/v1/notice/{notice['id']}/ack", b_worker.headers, None),
+        ("POST", f"/api/v1/flags/{flag_id}/review", b_ops.headers, {"status": "dismissed"}),
+        ("POST", f"/api/v1/branches/{s.branch['id']}/entrance-qr/rotate", hb, None),
+    ]
+    for method, path, headers, body in checks:
+        r = await client.request(method, path, headers=headers, json=body)
+        assert r.status_code == 404, f"{method} {path} -> {r.status_code}"
+    up = await client.post(
+        f"/api/v1/tasks/{task['id']}/proofs", headers=b_worker.headers,
+        data={"phase": "before"}, files={"photo": ("p.jpg", jpeg(), "image/jpeg")},
+    )  # fmt: skip
+    assert up.status_code == 404
+    # B's listings never contain A's rows
+    for path, who in [
+        ("/api/v1/task-templates", hb),
+        ("/api/v1/flags", b_ops.headers),
+        ("/api/v1/devices", hb),
+        ("/api/v1/attendance/today", hb),
+    ]:
+        resp = await client.get(path, headers=who)
+        assert resp.status_code == 200, f"{path} -> {resp.status_code}"
+        assert all(row["id"] not in {tpl["id"], device["id"]} for row in resp.json()), path
+    # and A's data is untouched
+    assert (await client.get(f"/api/v1/task-templates/{tpl['id']}", headers=a)).json()[
+        "active"
+    ] is True

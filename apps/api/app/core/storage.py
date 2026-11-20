@@ -8,6 +8,7 @@ Photos: magic-byte allow-list → decode → orient → resize (max 1280 px) →
 import asyncio
 import hashlib
 import io
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
@@ -33,6 +34,7 @@ _MAGIC = {
     b"RIFF": "webp",
 }
 Image.MAX_IMAGE_PIXELS = 40_000_000  # decompression-bomb guard
+warnings.simplefilter("error", Image.DecompressionBombWarning)  # refuse, don't just warn
 
 
 @lru_cache
@@ -119,7 +121,12 @@ def process_photo(raw: bytes, watermark: str) -> ProcessedPhoto:
     try:
         opened: Image.Image = Image.open(io.BytesIO(raw))
         opened.load()
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+    except (
+        UnidentifiedImageError,
+        OSError,
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+    ) as exc:
         raise AppError("PHOTO_UNREADABLE", 422) from exc
     oriented = ImageOps.exif_transpose(opened) or opened
     img = oriented.convert("RGB")

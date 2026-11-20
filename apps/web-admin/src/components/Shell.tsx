@@ -67,7 +67,10 @@ export function Shell({
           <Wordmark height={26} />
           <p className="mt-2 hidden text-xs leading-snug text-ink2 lg:block">{me?.hospital.name}</p>
         </div>
-        <nav aria-label="Main" className="flex gap-1 overflow-x-auto px-2 pb-2 lg:block lg:px-3">
+        <nav
+          aria-label={t('nav.main')}
+          className="flex gap-1 overflow-x-auto px-2 pb-2 lg:block lg:px-3"
+        >
           {GROUPS.map((g) => {
             const items = g.items.filter((i) => can(i.perm));
             if (!items.length) return null;

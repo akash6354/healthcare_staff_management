@@ -86,3 +86,12 @@ async def _apply_template_pack(s: AsyncSession, hid: uuid.UUID, modules: list[Mo
         s, hospital_id=hid, actor=PLATFORM, entity_type="hospital", entity_id=hid,
         action="hospital.created", payload={"modules": sorted(m.value for m in modules)},
     )  # fmt: skip
+
+
+async def list_hospitals() -> list[tuple[uuid.UUID, str]]:
+    """Ids and codes of every tenant (no other data). Used by cross-tenant jobs to iterate."""
+    from sqlalchemy import select
+
+    async with platform_session() as ps:
+        rows = (await ps.execute(select(Hospital.id, Hospital.code).order_by(Hospital.code))).all()
+    return [(r.id, r.code) for r in rows]

@@ -21,6 +21,7 @@ from app.modules.attendance.router import router as attendance_router
 from app.modules.auth.router import me_router
 from app.modules.auth.router import router as auth_router
 from app.modules.org.router import router as org_router
+from app.modules.privacy.router import router as privacy_router
 from app.modules.staff.router import router as staff_router
 from app.modules.tasks.router import router as tasks_router
 from app.policy.deps import assert_all_routes_declared, public
@@ -129,6 +130,7 @@ def create_app() -> FastAPI:
     api.include_router(staff_router)
     api.include_router(tasks_router)
     api.include_router(attendance_router)
+    api.include_router(privacy_router)
     app.include_router(api)
     return app
 

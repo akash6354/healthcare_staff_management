@@ -590,7 +590,9 @@ export function TemplatesScreen() {
                 className="rounded-control border border-linestrong p-2 text-base font-normal"
                 placeholder="Floor mopped | ನೆಲ ಒರೆಸಲಾಗಿದೆ | फ़र्श पोछा"
               />
-              <span className="text-sm font-normal text-ink2">{t('setup.checklist_hint')}</span>
+              <span className="text-sm font-normal text-ink2">
+                {t('setup.checklist_hint')} {t('common.no_patient_details')}
+              </span>
             </label>
             {save.error && (
               <p role="alert" className="text-sm text-bad-ink">

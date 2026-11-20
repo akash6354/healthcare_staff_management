@@ -12,3 +12,5 @@ Decided items live in `decisions.md` (sections G and H). Only facts the owner mu
 | 6 | Hosting | Production server for Monday (AWS Mumbai account, domain DNS for app.oglos.site, email sending). | Must exist before Monday handover |
 | 7 | Brand | SVG logos; light-background logo without the tile. | PNGs in `/media` |
 | 8 | Exports | Sample NABH registers from Olympus to match formats. | Generic registers |
+| 9 | Deployment | CERT-In log retention (180 days, India) and incident-response playbook; set up with hosting. | Tracked in docs/reviews/2026-11-20-phase1-pilot.md |
+| 10 | Translation | Native-speaker review of Kannada and Hindi UI strings and the staff notice. | Machine-assisted drafts in use |

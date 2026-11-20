@@ -15,6 +15,7 @@ cp .env.example .env          # then replace every change-me / REPLACE value
 make dev                      # Postgres 16 (port 5434), Redis 7, SeaweedFS S3 (port 9000)
 make migrate                  # alembic upgrade head
 make seed                     # demo hospital SUNRISE (synthetic); prints logins + TOTP secrets
+                              # SEED_RESET=1 make seed  wipes the dev database first
 pnpm install
 
 cd apps/api && uv run uvicorn app.main:app --port 8000   # API
@@ -33,7 +34,8 @@ pnpm dev:pwa                                             # staff app  http://loc
 ## Checks
 
 ```bash
-make lint && make test        # ruff, mypy, pytest (52 API tests incl. cross-tenant), eslint, tsc, vitest
+make lint && make test        # ruff, mypy, pytest (57 API tests incl. cross-tenant), eslint, tsc, vitest
+make verify-audit             # re-hash every hospital's audit chain
 node e2e/screens-staff.mjs    # screenshot walk-through (needs STAFF_DEVICE_KEY)
 node e2e/screens-admin.mjs    # needs MD_TOTP and ADMIN_TOTP from the seed output
 ```

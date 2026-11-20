@@ -122,7 +122,7 @@ async def db_session(
 
 async def current_principal(
     claims: Annotated[AccessClaims, Depends(current_claims)],
-    _db: Annotated[AsyncSession, Depends(db_session)],
+    _db: Annotated[AsyncSession, Depends(db_session, scope="function")],
 ) -> Principal:
     return Principal(
         user_id=claims.sub,
@@ -160,7 +160,9 @@ def public() -> Callable[[], Coroutine[Any, Any, None]]:
     return dependency
 
 
-DB = Annotated[AsyncSession, Depends(db_session)]
+# scope="function": commit (or roll back) before the response is sent, so a 2xx always means
+# the change is durable and the next request sees it.
+DB = Annotated[AsyncSession, Depends(db_session, scope="function")]
 
 
 def _declared(dep: Dependant) -> bool:
@@ -174,7 +176,7 @@ def _declared(dep: Dependant) -> bool:
 
 def undeclared_routes(app: FastAPI) -> list[str]:
     return [
-        f"{sorted(r.methods)} {r.path}"
+        f"{sorted(r.methods or ())} {r.path}"
         for r in app.routes
         if isinstance(r, APIRoute) and r.path.startswith("/api/") and not _declared(r.dependant)
     ]

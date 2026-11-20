@@ -240,7 +240,7 @@ function PinLogin({ onEmail, onReset }: { onEmail: () => void; onReset: () => vo
           ))}
           <button
             onClick={() => setPin(pin.slice(0, -1))}
-            aria-label="Delete"
+            aria-label={t('login.delete_digit')}
             className="grid h-16 place-items-center rounded-panel text-ink2 active:bg-sunk"
           >
             <Delete size={24} aria-hidden />

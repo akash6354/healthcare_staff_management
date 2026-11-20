@@ -199,6 +199,11 @@ export const en = {
   'role.requester': 'Requester',
   'role.vendor_user': 'Vendor',
   'role.quality_coordinator': 'Quality coordinator',
+  'common.yes': 'Yes',
+  'common.no': 'No',
+  'common.no_patient_details': "Don't enter patient details.",
+  'login.delete_digit': 'Delete last digit',
+  'nav.main': 'Main menu',
 } as const;
 
 export type MessageKey = keyof typeof en;

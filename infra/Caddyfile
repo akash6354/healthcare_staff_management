@@ -6,10 +6,15 @@
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(self), geolocation=(), microphone=()"
-		Content-Security-Policy "default-src 'self'; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'"
+		# Photos come from the private bucket through short-lived signed URLs, so its origin is allowed for images only.
+		Content-Security-Policy "default-src 'self'; img-src 'self' blob: data: {$S3_PUBLIC_ORIGIN:http://localhost:9000}; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self'"
 		-Server
 	}
 	handle /api/* {
+		# Reject oversized bodies before they reach the API (photos are re-encoded to ~200 KB anyway).
+		request_body {
+			max_size 15MB
+		}
 		reverse_proxy api:8000
 	}
 	handle {

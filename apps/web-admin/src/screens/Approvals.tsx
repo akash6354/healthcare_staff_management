@@ -143,9 +143,9 @@ export function Approvals() {
                     return (
                       <li key={item.key} className="flex items-center gap-2 text-base">
                         {ok ? (
-                          <Check size={18} className="text-good-ink" aria-label="yes" />
+                          <Check size={18} className="text-good-ink" aria-label={t('common.yes')} />
                         ) : (
-                          <X size={18} className="text-bad-ink" aria-label="no" />
+                          <X size={18} className="text-bad-ink" aria-label={t('common.no')} />
                         )}
                         {pick(item.label_i18n, lang)}
                       </li>
@@ -182,7 +182,9 @@ export function Approvals() {
                     className="rounded-control border border-linestrong p-3 text-base"
                     autoFocus
                   />
-                  <p className="text-sm text-ink2">{t('approve.reason_hint')}</p>
+                  <p className="text-sm text-ink2">
+                    {t('approve.reason_hint')} {t('common.no_patient_details')}
+                  </p>
                   <div className="flex gap-2">
                     <Button
                       variant="danger"

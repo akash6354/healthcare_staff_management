@@ -19,6 +19,10 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     task_default_queue="oglos",
     beat_schedule={
+        "retention-nightly": {
+            "task": "oglos.privacy.retention",
+            "schedule": crontab(hour=2, minute=0),
+        },
         "audit-verify-nightly": {
             "task": "oglos.audit.verify",
             "schedule": crontab(hour=3, minute=0),
@@ -30,5 +34,12 @@ celery_app.conf.update(
 @celery_app.task(name="oglos.audit.verify")  # type: ignore[misc]
 def verify_audit_chains() -> int:
     from app.audit.verify import main
+
+    return asyncio.run(main())
+
+
+@celery_app.task(name="oglos.privacy.retention")  # type: ignore[misc]
+def retention() -> dict[str, int]:
+    from app.modules.privacy.retention import main
 
     return asyncio.run(main())

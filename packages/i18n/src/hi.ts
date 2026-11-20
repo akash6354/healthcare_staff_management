@@ -201,4 +201,9 @@ export const hi: Record<MessageKey, string> = {
   'role.requester': 'अनुरोधकर्ता',
   'role.vendor_user': 'वेंडर',
   'role.quality_coordinator': 'गुणवत्ता समन्वयक',
+  'common.yes': 'हाँ',
+  'common.no': 'नहीं',
+  'common.no_patient_details': 'मरीज़ की जानकारी न लिखें।',
+  'login.delete_digit': 'आख़िरी अंक मिटाएँ',
+  'nav.main': 'मुख्य मेनू',
 };

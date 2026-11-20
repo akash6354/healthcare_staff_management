@@ -169,6 +169,17 @@ async def desk_filter(db: AsyncSession, access: Access) -> Any:
     return Task.desk_id.in_(mine) if mine else False
 
 
+def desk_in_scope(access: Access, desk: Desk) -> bool:
+    """Body-supplied desk ids must be inside the caller's zone (security-review section 2)."""
+    if access.scope >= Scope.hospital:
+        return True
+    if access.scope >= Scope.department:
+        return desk.department_id in access.department_ids
+    if access.scope >= Scope.area:
+        return desk.area_id in access.area_ids
+    return False
+
+
 async def get_task_in_scope(db: AsyncSession, access: Access, task_id: uuid.UUID) -> Task:
     task = await db.scalar(
         select(Task).where(Task.id == task_id, await desk_filter(db, access)).with_for_update()

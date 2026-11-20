@@ -1,7 +1,7 @@
 """Task routes: templates, desk tasks, photo proof, approval, flags, dashboard, notifications."""
 
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
@@ -20,6 +20,7 @@ from app.modules.tasks.models import (
     FlagStatus,
     Notification,
     ProofPhase,
+    ProofPurge,
     Task,
     TaskFlag,
     TaskProof,
@@ -50,9 +51,19 @@ async def _detail(db: DB, task: Task) -> sc.TaskDetail:
             .order_by(TaskProof.server_received_at)
         )
     ).all()
+    purged = set(
+        (
+            await db.scalars(
+                select(ProofPurge.proof_id).where(ProofPurge.proof_id.in_([p.id for p in proofs]))
+            )
+        ).all()
+    )
     out.proofs = [
         sc.ProofOut.model_validate(p).model_copy(
-            update={"url": signed_url(p.object_key), "thumb_url": signed_url(p.thumb_key)}
+            update={
+                "url": None if p.id in purged else signed_url(p.object_key),
+                "thumb_url": signed_url(p.thumb_key),
+            }
         )
         for p in proofs
     ]
@@ -100,8 +111,10 @@ async def my_tasks(db: DB, access: Access = Depends(requires(Perm.task_view))) -
         return []
     start, end = svc.day_bounds(day)
     stmt = select(Task).where(
-        Task.desk_id.in_(desks), Task.due_at < end,
-        (Task.due_at >= start) | Task.status.in_(svc.OPEN_STATES),
+        Task.desk_id.in_(desks),
+        # everything due today, plus open work due in the next 18 h (night shifts cross midnight)
+        ((Task.due_at >= start) & (Task.due_at < end))
+        | (Task.status.in_(svc.OPEN_STATES) & (Task.due_at < datetime.now(UTC) + timedelta(hours=18))),
     ).order_by(Task.due_at)  # fmt: skip
     return (await db.scalars(stmt)).all()
 
@@ -122,7 +135,7 @@ async def create_one_time(
 ) -> Any:
     svc.ensure_reviewer(access)
     desk = await db.get(Desk, body.desk_id)
-    if desk is None:
+    if desk is None or not svc.desk_in_scope(access, desk):
         raise not_found("desk")
     task = Task(
         hospital_id=access.principal.hospital_id, number=await svc.next_number(db, access.principal.hospital_id),

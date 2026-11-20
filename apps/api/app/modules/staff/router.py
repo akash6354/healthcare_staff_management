@@ -12,6 +12,7 @@ from app.core.crud import crud_router
 from app.core.crypto import token_hash
 from app.core.errors import AppError, not_found
 from app.modules.auth.service import new_device_key, set_password, set_pin
+from app.modules.org.models import Desk
 from app.modules.staff import schemas as sc
 from app.modules.staff import service as svc
 from app.modules.staff.models import (
@@ -211,8 +212,16 @@ async def list_roster(
 async def create_roster(
     body: sc.RosterIn, db: DB, access: Access = Depends(requires(Perm.roster_manage))
 ) -> Any:
-    if access.scope < Scope.hospital and body.department_id not in access.department_ids:
-        raise AppError("FORBIDDEN", 403)
+    if access.scope < Scope.hospital:
+        # Re-check every id from the body against the caller's departments, not just the
+        # department_id the client claims (security-review §2).
+        person = await svc.get_user_in_scope(db, access, body.user_id)
+        desk = await db.get(Desk, body.desk_id) if body.desk_id else None
+        claimed = {body.department_id, person.department_id, desk.department_id if desk else None}
+        if body.desk_id and desk is None:
+            raise not_found("desk")
+        if not (claimed - {None}) <= access.department_ids or body.department_id is None:
+            raise AppError("FORBIDDEN", 403)
     entry = RosterEntry(hospital_id=access.principal.hospital_id, **body.model_dump())
     db.add(entry)
     await db.flush()

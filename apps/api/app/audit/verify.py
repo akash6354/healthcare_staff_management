@@ -3,16 +3,13 @@
 import asyncio
 import sys
 
-from sqlalchemy import select
-
 from app.audit.service import verify_chain
-from app.core.db import dispose_engines, platform_session, tenant_session
-from app.modules.org.models import Hospital
+from app.core.db import dispose_engines, tenant_session
+from app.modules.platform.service import list_hospitals
 
 
 async def main() -> int:
-    async with platform_session() as s:
-        hospitals = (await s.execute(select(Hospital.id, Hospital.code))).all()
+    hospitals = await list_hospitals()
     failed = 0
     for hid, code in hospitals:
         async with tenant_session(hid) as s:

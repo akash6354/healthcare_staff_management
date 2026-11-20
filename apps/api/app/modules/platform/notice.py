@@ -7,7 +7,7 @@ The contact line stays a placeholder until docs/open-questions.md #1 is answered
 EN = """\
 Staff data notice (DRAFT for legal review)
 
-What we collect while you are on duty: your name, employee code, work email or phone, role, department, the desk and shift you are assigned to, the times you check in and out by scanning the entrance QR code, the tasks you start and finish, and photos of the work areas you clean or fix.
+What we collect while you are on duty: your name, employee code, work email or phone, an optional emergency contact, your joining date, role, department, the desk and shift you are assigned to, the times you check in and out by scanning the entrance QR code, the tasks you start and finish, and photos of the work areas you clean or fix.
 
 What we do not collect: no fingerprints, no face recognition, no GPS or location tracking, no Aadhaar number, and nothing about patients. Never photograph patients.
 
@@ -27,7 +27,7 @@ This also applies to agency and contract staff working at the hospital.
 KN = """\
 ಸಿಬ್ಬಂದಿ ಡೇಟಾ ಸೂಚನೆ (ಕಾನೂನು ಪರಿಶೀಲನೆಗಾಗಿ ಕರಡು)
 
-ನೀವು ಕರ್ತವ್ಯದಲ್ಲಿರುವಾಗ ನಾವು ಸಂಗ್ರಹಿಸುವುದು: ನಿಮ್ಮ ಹೆಸರು, ಉದ್ಯೋಗಿ ಕೋಡ್, ಕೆಲಸದ ಇಮೇಲ್ ಅಥವಾ ಫೋನ್, ಹುದ್ದೆ, ವಿಭಾಗ, ನಿಮಗೆ ನೀಡಿದ ಡೆಸ್ಕ್ ಮತ್ತು ಶಿಫ್ಟ್, ಪ್ರವೇಶದ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಒಳಗೆ ಮತ್ತು ಹೊರಗೆ ಹೋಗುವ ಸಮಯ, ನೀವು ಪ್ರಾರಂಭಿಸುವ ಮತ್ತು ಮುಗಿಸುವ ಕೆಲಸಗಳು, ಮತ್ತು ನೀವು ಸ್ವಚ್ಛಗೊಳಿಸುವ ಅಥವಾ ಸರಿಪಡಿಸುವ ಸ್ಥಳಗಳ ಫೋಟೋಗಳು.
+ನೀವು ಕರ್ತವ್ಯದಲ್ಲಿರುವಾಗ ನಾವು ಸಂಗ್ರಹಿಸುವುದು: ನಿಮ್ಮ ಹೆಸರು, ಉದ್ಯೋಗಿ ಕೋಡ್, ಕೆಲಸದ ಇಮೇಲ್ ಅಥವಾ ಫೋನ್, ಐಚ್ಛಿಕ ತುರ್ತು ಸಂಪರ್ಕ, ಸೇರಿದ ದಿನಾಂಕ, ಹುದ್ದೆ, ವಿಭಾಗ, ನಿಮಗೆ ನೀಡಿದ ಡೆಸ್ಕ್ ಮತ್ತು ಶಿಫ್ಟ್, ಪ್ರವೇಶದ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಒಳಗೆ ಮತ್ತು ಹೊರಗೆ ಹೋಗುವ ಸಮಯ, ನೀವು ಪ್ರಾರಂಭಿಸುವ ಮತ್ತು ಮುಗಿಸುವ ಕೆಲಸಗಳು, ಮತ್ತು ನೀವು ಸ್ವಚ್ಛಗೊಳಿಸುವ ಅಥವಾ ಸರಿಪಡಿಸುವ ಸ್ಥಳಗಳ ಫೋಟೋಗಳು.
 
 ನಾವು ಸಂಗ್ರಹಿಸದಿರುವುದು: ಬೆರಳಚ್ಚು ಇಲ್ಲ, ಮುಖ ಗುರುತಿಸುವಿಕೆ ಇಲ್ಲ, GPS ಅಥವಾ ಸ್ಥಳ ಟ್ರ್ಯಾಕಿಂಗ್ ಇಲ್ಲ, ಆಧಾರ್ ಸಂಖ್ಯೆ ಇಲ್ಲ, ರೋಗಿಗಳ ಬಗ್ಗೆ ಏನೂ ಇಲ್ಲ. ರೋಗಿಗಳ ಫೋಟೋ ಎಂದಿಗೂ ತೆಗೆಯಬೇಡಿ.
 
@@ -47,7 +47,7 @@ KN = """\
 HI = """\
 कर्मचारी डेटा सूचना (कानूनी समीक्षा के लिए मसौदा)
 
-ड्यूटी के दौरान हम क्या रखते हैं: आपका नाम, कर्मचारी कोड, काम का ईमेल या फ़ोन, पद, विभाग, आपको दी गई डेस्क और शिफ्ट, प्रवेश द्वार का QR कोड स्कैन करके आने-जाने का समय, आपके द्वारा शुरू और पूरे किए गए काम, और जिन जगहों को आप साफ़ या ठीक करते हैं उनकी फ़ोटो।
+ड्यूटी के दौरान हम क्या रखते हैं: आपका नाम, कर्मचारी कोड, काम का ईमेल या फ़ोन, वैकल्पिक आपातकालीन संपर्क, नौकरी शुरू करने की तारीख, पद, विभाग, आपको दी गई डेस्क और शिफ्ट, प्रवेश द्वार का QR कोड स्कैन करके आने-जाने का समय, आपके द्वारा शुरू और पूरे किए गए काम, और जिन जगहों को आप साफ़ या ठीक करते हैं उनकी फ़ोटो।
 
 हम क्या नहीं रखते: कोई फिंगरप्रिंट नहीं, चेहरा पहचान नहीं, GPS या लोकेशन ट्रैकिंग नहीं, आधार नंबर नहीं, और मरीज़ों के बारे में कुछ भी नहीं। मरीज़ों की फ़ोटो कभी न लें।
 

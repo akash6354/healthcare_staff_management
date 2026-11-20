@@ -212,12 +212,14 @@ async def seed() -> None:
                 "desk_id": desk["id"], "schedule_kind": "daily", "times": ["08:00", "11:00", "14:00", "17:00"],
                 "title_i18n": {"en": f"Washroom cleaning, floor {label}", "kn": f"ಶೌಚಾಲಯ ಸ್ವಚ್ಛತೆ, ಮಹಡಿ {label}", "hi": f"शौचालय सफ़ाई, मंज़िल {label}"},
                 "instructions_i18n": {"en": "Use the blue bucket for washrooms only.", "kn": "ಶೌಚಾಲಯಕ್ಕೆ ನೀಲಿ ಬಕೆಟ್ ಮಾತ್ರ ಬಳಸಿ.", "hi": "शौचालय के लिए केवल नीली बाल्टी इस्तेमाल करें।"},
-                "checklist": CHECKLIST_WASHROOM, "due_minutes": 45, "min_minutes": 6,
+                "checklist": CHECKLIST_WASHROOM, "due_minutes": 45,
+                # only one floor carries the "too fast" rule, so the demo shows a few flags, not dozens
+                "min_minutes": 6 if label == "3" else 0,
             })  # fmt: skip
             await sd.post(A, "/task-templates", {
                 "desk_id": desk["id"], "schedule_kind": "daily", "times": ["09:30", "15:30"],
                 "title_i18n": {"en": f"Corridor and common area, floor {label}", "kn": f"ಕಾರಿಡಾರ್, ಮಹಡಿ {label}", "hi": f"गलियारा, मंज़िल {label}"},
-                "checklist": CHECKLIST_FLOOR, "due_minutes": 60, "min_minutes": 8,
+                "checklist": CHECKLIST_FLOOR, "due_minutes": 60, "min_minutes": 0,
             })  # fmt: skip
 
         await simulate_day(sd, worker_ids, sup)
@@ -297,7 +299,17 @@ async def print_logins(hid: uuid.UUID) -> None:
     await dispose_engines()
 
 
+def reset_database() -> None:
+    """Dev only: wipe every table by migrating down to base and back up (SEED_RESET=1)."""
+    import subprocess
+
+    for args in (["downgrade", "base"], ["upgrade", "head"]):
+        subprocess.run([sys.executable, "-m", "alembic", *args], check=True)  # noqa: S603
+
+
 if __name__ == "__main__":
     if os.environ.get("APP_ENV") == "production":
         sys.exit("Refusing to seed demo data in production.")
+    if os.environ.get("SEED_RESET") == "1":
+        reset_database()
     asyncio.run(seed())
