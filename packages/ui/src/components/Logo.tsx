@@ -11,6 +11,7 @@ export function Wordmark({ onDark = false, height = 28 }: { onDark?: boolean; he
       src={onDark ? '/brand/oglos-logo-dark.png' : '/brand/oglos-logo-light.png'}
       height={height}
       style={{ height, width: 'auto' }}
+      className="block max-w-none shrink-0 self-start"
       alt="OGLOS"
     />
   );
