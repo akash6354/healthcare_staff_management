@@ -1,0 +1,13 @@
+**/node_modules
+**/.venv
+**/dist
+**/dev-dist
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+apps/*/public/brand
+.git
+.env
+.env.*
+docs/screens

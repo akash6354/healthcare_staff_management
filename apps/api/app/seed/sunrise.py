@@ -235,11 +235,13 @@ async def simulate_day(sd: Seeder, workers: list[uuid.UUID], sup: uuid.UUID) -> 
     """Move earlier tasks through realistic states (done, awaiting approval, rework, overdue)."""
     now = datetime.now(UTC)
     for i, uid in enumerate(workers):
-        tasks = [
-            t
-            for t in await sd.get(uid, "/me/tasks")
-            if datetime.fromisoformat(t["due_at"]) < now + timedelta(hours=1)
+        mine = sorted(await sd.get(uid, "/me/tasks"), key=lambda t: t["due_at"])
+        due_soon = [
+            t for t in mine if datetime.fromisoformat(t["due_at"]) < now + timedelta(hours=1)
         ]
+        # Early in the day nothing is due yet: still play out the first three tasks (finished
+        # ahead of time) so a morning demo shows approvals, rework and flags.
+        tasks = due_soon if len(due_soon) >= 3 else mine[:3]
         for j, t in enumerate(tasks):
             pattern = (i + j) % 5
             if pattern == 4:

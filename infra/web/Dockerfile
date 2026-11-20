@@ -2,7 +2,7 @@
 #   docker build -f infra/web/Dockerfile -t oglos-web:local .
 FROM node:22.12-alpine AS build
 WORKDIR /repo
-RUN corepack enable
+RUN npm install -g pnpm@10.34.9  # not corepack: old Node images ship stale npm signing keys
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json eslint.config.js ./
 COPY apps/staff-pwa/package.json apps/staff-pwa/
 COPY apps/web-admin/package.json apps/web-admin/

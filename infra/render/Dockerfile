@@ -1,7 +1,7 @@
 # Single-service prototype image for Render: builds both web apps, serves them from the API.
 FROM node:22.12-alpine AS web
 WORKDIR /repo
-RUN corepack enable
+RUN npm install -g pnpm@10.34.9  # not corepack: old Node images ship stale npm signing keys
 COPY . .
 RUN pnpm install --frozen-lockfile \
  && pnpm --filter @oglos/web-admin build \

@@ -6,12 +6,19 @@ from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_REPO_ROOT = Path(__file__).resolve().parents[4]
+
+def _find_env_file() -> str | None:
+    """The repo's .env in local development; containers get real environment variables instead."""
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".env"
+        if candidate.is_file():
+            return str(candidate)
+    return None
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=str(_REPO_ROOT / ".env"), env_file_encoding="utf-8", extra="ignore"
+        env_file=_find_env_file(), env_file_encoding="utf-8", extra="ignore"
     )
 
     app_env: str = "development"
