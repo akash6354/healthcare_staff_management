@@ -42,7 +42,7 @@ if (key) {
   if (await agree.count()) await agree.click();
   await page.waitForTimeout(1500);
   await shot('04-home');
-  const open = page.locator('a[href^="/task/"]');
+  const open = page.locator('a[href*="/task/"]');
   if (await open.count()) {
     await open.first().click();
     await page.waitForTimeout(1500);

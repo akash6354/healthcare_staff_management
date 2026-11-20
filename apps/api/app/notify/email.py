@@ -27,7 +27,7 @@ class ConsoleEmailAdapter:
 
     async def send(self, message: EmailMessage) -> None:
         self.outbox.append(message)
-        if get_settings().app_env == "development":
+        if get_settings().app_env in ("development", "demo"):  # never in production
             print(
                 f"\n--- email to {message.to}: {message.subject}\n{message.body}\n---", flush=True
             )

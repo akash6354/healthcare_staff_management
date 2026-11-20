@@ -1,4 +1,7 @@
-"""Private object storage (S3 / SeaweedFS) and photo processing for proof of work.
+"""Private object storage and photo processing for proof of work.
+
+Backends (STORAGE_BACKEND): "s3" (AWS S3 in production, SeaweedFS locally) or "db" (bytes in
+Postgres, for the free-tier Render prototype). Both serve photos only through short-lived signed URLs.
 
 Photos: magic-byte allow-list → decode → orient → resize (max 1280 px) → re-encode JPEG under
 ~200 KB (product plan) → no metadata (EXIF/GPS stripped by re-encoding) → watermark
@@ -6,19 +9,26 @@ Photos: magic-byte allow-list → decode → orient → resize (max 1280 px) →
 """
 
 import asyncio
+import base64
 import hashlib
+import hmac
 import io
+import time
+import uuid
 import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
 from typing import Any
+from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
 
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.errors import AppError
@@ -55,6 +65,8 @@ def s3() -> Any:
 
 
 def ensure_bucket() -> None:
+    if _db_backend():
+        return
     bucket = get_settings().s3_bucket
     try:
         s3().head_bucket(Bucket=bucket)
@@ -62,7 +74,20 @@ def ensure_bucket() -> None:
         s3().create_bucket(Bucket=bucket)
 
 
-async def put_object(key: str, data: bytes, content_type: str) -> None:
+def _db_backend() -> bool:
+    return get_settings().storage_backend == "db"
+
+
+async def put_object(session: AsyncSession, key: str, data: bytes, content_type: str) -> None:
+    if _db_backend():
+        from app.modules.tasks.models import StoredObject
+
+        hospital_id = uuid.UUID(key.split("/")[1])
+        session.add(
+            StoredObject(key=key, hospital_id=hospital_id, content_type=content_type, data=data)
+        )
+        await session.flush()
+        return
     await asyncio.to_thread(
         s3().put_object,
         Bucket=get_settings().s3_bucket,
@@ -72,7 +97,30 @@ async def put_object(key: str, data: bytes, content_type: str) -> None:
     )
 
 
+async def delete_object(session: AsyncSession, key: str) -> None:
+    if _db_backend():
+        from app.modules.tasks.models import StoredObject
+
+        await session.execute(delete(StoredObject).where(StoredObject.key == key))
+        return
+    await asyncio.to_thread(s3().delete_object, Bucket=get_settings().s3_bucket, Key=key)
+
+
+def _file_sig(key: str, expires: int) -> str:
+    secret = get_settings().jwt_signing_key.encode()
+    mac = hmac.new(secret, f"file|{key}|{expires}".encode(), hashlib.sha256).digest()
+    return base64.urlsafe_b64encode(mac[:18]).decode().rstrip("=")
+
+
+def verify_file_sig(key: str, expires: int, sig: str) -> bool:
+    return expires >= int(time.time()) and hmac.compare_digest(_file_sig(key, expires), sig)
+
+
 def signed_url(key: str, seconds: int = 300) -> str:
+    if _db_backend():
+        expires = int(time.time()) + seconds
+        query = urlencode({"e": expires, "s": _file_sig(key, expires)})
+        return f"/api/v1/files/{quote(key)}?{query}"
     url: str = s3().generate_presigned_url(
         "get_object", Params={"Bucket": get_settings().s3_bucket, "Key": key}, ExpiresIn=seconds
     )

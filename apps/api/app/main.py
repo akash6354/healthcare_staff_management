@@ -5,11 +5,12 @@ import logging
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import get_settings
@@ -23,6 +24,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.org.router import router as org_router
 from app.modules.privacy.router import router as privacy_router
 from app.modules.staff.router import router as staff_router
+from app.modules.tasks.files import router as files_router
 from app.modules.tasks.router import router as tasks_router
 from app.policy.deps import assert_all_routes_declared, public
 
@@ -83,7 +85,10 @@ def create_app() -> FastAPI:
         response.headers["X-Request-ID"] = rid[:64]
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Cache-Control"] = "no-store"
+        response.headers.setdefault("Cache-Control", "no-store")
+        if settings.web_dist_dir and not request.url.path.startswith("/api/"):
+            response.headers.setdefault("Content-Security-Policy", WEB_CSP)
+            response.headers.setdefault("X-Frame-Options", "DENY")
         return response
 
     app.add_exception_handler(AppError, app_error_handler)
@@ -131,8 +136,45 @@ def create_app() -> FastAPI:
     api.include_router(tasks_router)
     api.include_router(attendance_router)
     api.include_router(privacy_router)
+    api.include_router(files_router)
     app.include_router(api)
+    if settings.web_dist_dir:
+        mount_web(app, Path(settings.web_dist_dir))
     return app
+
+
+WEB_CSP = (
+    "default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; "
+    "frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self'"
+)
+
+
+def mount_web(app: FastAPI, dist: Path) -> None:
+    """Serve the built apps from the API (single-service prototype): staff PWA under /staff/,
+    admin at /. Unknown paths fall back to each app's index.html (client-side routing)."""
+    roots = {"staff": (dist / "staff").resolve(), "admin": (dist / "admin").resolve()}
+
+    def pick(root: Path, rel: str) -> FileResponse:
+        target = (root / rel).resolve()
+        if rel and target.is_file() and target.is_relative_to(root):
+            immutable = "/assets/" in f"/{rel}"
+            cache = "public, max-age=31536000, immutable" if immutable else "no-cache"
+            return FileResponse(target, headers={"Cache-Control": cache})
+        return FileResponse(root / "index.html", headers={"Cache-Control": "no-cache"})
+
+    @app.get("/staff", include_in_schema=False)
+    async def staff_root() -> RedirectResponse:
+        return RedirectResponse("/staff/")
+
+    @app.get("/staff/{rel:path}", include_in_schema=False)
+    async def staff(rel: str) -> FileResponse:
+        return pick(roots["staff"], rel)
+
+    @app.get("/{rel:path}", include_in_schema=False)
+    async def admin(rel: str) -> FileResponse:
+        if rel.startswith("api/"):
+            raise AppError("NOT_FOUND", 404)
+        return pick(roots["admin"], rel)
 
 
 app = create_app()

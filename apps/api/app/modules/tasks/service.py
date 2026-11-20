@@ -235,8 +235,8 @@ async def add_proof(
     photo = process_photo(raw, label)
     pid = uuid7()
     base = f"h/{task.hospital_id}/t/{task.id}/{pid}"
-    await put_object(f"{base}.jpg", photo.jpeg, "image/jpeg")
-    await put_object(f"{base}_t.jpg", photo.thumb, "image/jpeg")
+    await put_object(db, f"{base}.jpg", photo.jpeg, "image/jpeg")
+    await put_object(db, f"{base}_t.jpg", photo.thumb, "image/jpeg")
     proof = TaskProof(
         id=pid, hospital_id=task.hospital_id, task_id=task.id, phase=phase,
         object_key=f"{base}.jpg", thumb_key=f"{base}_t.jpg", sha256=photo.sha256,

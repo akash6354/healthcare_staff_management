@@ -108,10 +108,12 @@ def _issue(response: Response, issued: auth.IssuedSession) -> TokenOut:
     response.set_cookie(
         REFRESH_COOKIE, issued.refresh_token, httponly=True, secure=secure, samesite="strict",
         path=COOKIE_PATH, max_age=get_settings().refresh_token_days * 86400,
+        domain=get_settings().cookie_domain,
     )  # fmt: skip
     response.set_cookie(
         CSRF_COOKIE, new_token(16), httponly=False, secure=secure, samesite="strict",
         path="/", max_age=get_settings().refresh_token_days * 86400,
+        domain=get_settings().cookie_domain,
     )  # fmt: skip
     return TokenOut(
         access_token=issued.access_token, expires_at=issued.access_expires_at,
@@ -120,8 +122,9 @@ def _issue(response: Response, issued: auth.IssuedSession) -> TokenOut:
 
 
 def _clear(response: Response) -> None:
-    response.delete_cookie(REFRESH_COOKIE, path=COOKIE_PATH)
-    response.delete_cookie(CSRF_COOKIE, path="/")
+    domain = get_settings().cookie_domain
+    response.delete_cookie(REFRESH_COOKIE, path=COOKIE_PATH, domain=domain)
+    response.delete_cookie(CSRF_COOKIE, path="/", domain=domain)
 
 
 @router.post(

@@ -11,7 +11,9 @@ export class ApiError extends Error {
   }
 }
 
-const BASE = '/api/v1';
+// Same-origin '/api/v1' by default; set VITE_API_BASE (e.g. https://api.oglos.site/api/v1) when the
+// API lives on its own subdomain (Render).
+const BASE: string = import.meta.env.VITE_API_BASE ?? '/api/v1';
 let accessToken: string | null = null;
 let refreshing: Promise<boolean> | null = null;
 const listeners = new Set<(signedIn: boolean) => void>();

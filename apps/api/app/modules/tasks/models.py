@@ -10,6 +10,7 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     DateTime,
+    ForeignKeyConstraint,
     Index,
     Integer,
     LargeBinary,
@@ -260,5 +261,20 @@ class ProofPurge(IdMixin, TenantMixin, Base):
     )
     proof_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     purged_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
+    )
+
+
+class StoredObject(TenantMixin, Base):
+    """Photo bytes for the "db" storage backend (free-tier prototype). Production uses S3."""
+
+    __tablename__ = "stored_objects"
+    __table_args__ = (  # type: ignore[assignment]
+        ForeignKeyConstraint(["hospital_id"], ["hospitals.id"], ondelete="RESTRICT"),
+    )
+    key: Mapped[str] = mapped_column(String(200), primary_key=True)
+    content_type: Mapped[str] = mapped_column(String(60), nullable=False)
+    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.clock_timestamp(), nullable=False
     )

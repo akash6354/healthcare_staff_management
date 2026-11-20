@@ -3,7 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_base_url: str = "http://localhost:5173"
     cors_origins: str = "http://localhost:5173"
+    # Set to ".oglos.site" when the apps and the API are on different subdomains (Render), so the
+    # refresh and CSRF cookies are shared across app./ops./api. Leave empty for same-origin setups.
+    cookie_domain: str | None = None
 
     database_url: str
     migrations_database_url: str
@@ -24,6 +27,10 @@ class Settings(BaseSettings):
     test_database_name: str = "oglos_test"
     redis_url: str = "redis://localhost:6379/0"
 
+    storage_backend: str = "s3"  # "s3" | "db" (free-tier prototype only)
+    web_dist_dir: str | None = (
+        None  # serve the built web apps from the API (single-service deploys)
+    )
     s3_endpoint_url: str | None = None
     s3_bucket: str = "oglos-evidence"
     s3_access_key: str = ""
@@ -45,6 +52,26 @@ class Settings(BaseSettings):
     email_from: str = "OGLOS <no-reply@oglos.site>"
     aws_ses_region: str = "ap-south-1"
     breached_password_check: str = "off"  # noqa: S105 - a mode flag, not a secret
+
+    @field_validator("database_url", "migrations_database_url", "platform_database_url")
+    @classmethod
+    def _asyncpg_url(cls, v: str) -> str:
+        """Accept provider URLs (postgres://...?sslmode=require) and convert them for asyncpg."""
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                v = "postgresql+asyncpg://" + v[len(prefix) :]
+        if "sslmode=" in v:
+            base, _, query = v.partition("?")
+            params = [p for p in query.split("&") if p and not p.startswith("sslmode=")]
+            ssl = "require" in query or "verify" in query
+            params += ["ssl=require"] if ssl else []
+            v = base + ("?" + "&".join(params) if params else "")
+        return v
+
+    @field_validator("cookie_domain")
+    @classmethod
+    def _empty_none(cls, v: str | None) -> str | None:
+        return v or None
 
     @property
     def is_production(self) -> bool:

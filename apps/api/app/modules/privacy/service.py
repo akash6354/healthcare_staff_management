@@ -6,7 +6,6 @@
   deactivated staff anonymised after `deactivated_staff_months`
 """
 
-import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -15,10 +14,9 @@ from sqlalchemy import delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.service import SYSTEM, Actor, record
-from app.core.config import get_settings
 from app.core.crypto import decrypt_field
 from app.core.errors import AppError, not_found
-from app.core.storage import s3
+from app.core.storage import delete_object
 from app.modules.auth.models import AuthSession, Credential, OtpChallenge, RefreshToken
 from app.modules.staff.models import RosterEntry, ShiftCheckin, User, UserRole, UserStatus
 from app.modules.tasks.models import NoticeAcknowledgement, ProofPurge, Task, TaskProof
@@ -129,9 +127,8 @@ async def apply_retention(
             .limit(500)
         )
     ).all()
-    bucket = get_settings().s3_bucket
     for proof in due:
-        await asyncio.to_thread(s3().delete_object, Bucket=bucket, Key=proof.object_key)
+        await delete_object(db, proof.object_key)
         db.add(ProofPurge(hospital_id=hospital_id, proof_id=proof.id))
     if due:
         await db.flush()
