@@ -70,3 +70,32 @@ Demo and seed data: synthetic "Sunrise Multispeciality, Bengaluru" (~100 beds).
 - **Notifications (§3.6):** the email channel is added; WhatsApp/SMS are deferred (adapter interface only).
 - **Housekeeping evidence:** photo required on every task by default (the spec said high-risk only).
 - **Configurability:** all business rules above are per-hospital settings with these defaults, not hard-coded values.
+
+## G. Decided by Claude (owner delegated: "decide whatever fits best", 2026-11-20)
+Each is a per-hospital default unless stated. Reasoning in brackets.
+| # | Topic | Decision |
+|---|---|---|
+| G1 | Email provider | **AWS SES (ap-south-1)** behind the email adapter; console adapter in dev. [same cloud/region as hosting, data stays in India, cheapest] |
+| G2 | Staff without email or device | No proxy completion. Every worker needs email or a registered-device PIN. [proof must be tied to the person who did the work] |
+| G3 | Vendors across hospitals | One account per hospital in v1. [keeps tenancy simple and strict] |
+| G4 | reject vs decline | `reject` = verifier fails submitted work → reassign; `decline` = worker refuses an assignment → back to unassigned (reason required). |
+| G5 | On hold | Pauses SLA clocks. Workers *request* a hold; supervisor+ approves. [stops workers parking late tasks] |
+| G6 | Resolution clock | Stops at `submitted`; verification has its own supervisor clock (default 60 min). [each person is measured on their own part] |
+| G7 | Housekeeping SLA | High risk: 30 min response / 60 min finish · Medium: 60 / 120 · Low: 120 / 240. Verify within 60 min. |
+| G8 | Hours | 24×7 for housekeeping and critical/high maintenance; business hours (08:00–20:00 IST, Mon–Sat) for normal-priority civil work. |
+| G9 | Inspection scoring | 0–100 scale, pass ≥ 80; failing any item marked *critical* = fail regardless of score. |
+| G10 | Worker score | 40% on-time rate, 40% inspection pass rate, 20% no-rework rate, over a rolling 30 days. Shown as a trend to the worker and supervisor, not a public ranking. [fairer, less punitive] |
+| G11 | Offline scans | Accepted if synced within 2 h of the claimed scan time; flagged "synced late" when the gap is > 10 min; rejected after 2 h. |
+| G12 | Photos | One "after" photo by default; "before + after" can be switched on per area type (default on for ICU/OT). |
+| G13 | Escalation timing | L1 (supervisor) at due time, L2 (dept head) +30 min, L3 (ops manager) +60 min. Critical priority: +15 / +30 min. |
+| G14 | MD escalations | The MD does not receive escalation notifications; open escalations are shown on the MD overview, plus a daily 08:00 email summary. |
+| G15 | Public reporter phone | Kept 90 days after the report closes, then purged. |
+| G16 | Public issue options | Oglos default list per area type; hospital admins can edit it. |
+| G17 | Discharge trigger | A `requester` role scoped to the ward (ward nurse/clerk gets a minimal OGLOS login: discharge button + requests only). |
+| G18 | Shift check-in | Optional per hospital, default **off**. |
+| G19 | Web push | Implement VAPID/RFC 8291 with `cryptography` (Apache/BSD) instead of MPL-licensed `pywebpush`. |
+| G20 | Fonts | Anek (Latin/Kannada/Devanagari) if tabular figures check out in Phase 1; otherwise IBM Plex Sans + Noto Sans Kannada/Devanagari. |
+| G21 | Module switches | Only the Oglos platform admin can switch modules (tied to pricing). |
+| G22 | NABH exports v1 | Daily cleaning register, inspection register, work-order log, SLA summary (PDF + CSV). Refine with a real hospital's registers later. |
+| G23 | Backup region | AWS ap-south-2 (Hyderabad). |
+| G24 | Local dev tooling | `make` targets wrap plain commands; on Windows without make, `scripts/dev.ps1` exposes the same targets. |
