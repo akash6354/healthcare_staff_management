@@ -1,0 +1,138 @@
+/* OGLOS design tokens. Source: docs/ui-direction.md (colours measured from /media logos,
+   status palette validated with the dataviz skill's validate_palette.js). Define once, use everywhere. */
+
+@import '@fontsource-variable/anek-latin/wdth.css';
+@import '@fontsource-variable/anek-kannada/wdth.css';
+@import '@fontsource-variable/anek-devanagari/wdth.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+:root {
+  color-scheme: light;
+
+  /* brand (logo) */
+  --ward-green: #0f3d2e;
+  --tile-green: #1c513e;
+  --deep-tile: #0c2e23;
+  --gilt: #d4af56; /* gold on dark only */
+  --brass: #8a6a1f; /* gold on light: focus ring, small highlights (5.05:1 on white) */
+  --pale-gilt: #f2d98f;
+  --cream-dot: #f6ebc8;
+
+  /* neutrals: green-tinted greys derived from Ward Green */
+  --bg: #f4f5f1;
+  --surface: #ffffff;
+  --surface-sunk: #eceee9;
+  --border: #d9ddd6;
+  --border-strong: #7a827d;
+  --ink: #1a2420;
+  --ink-2: #5a635e;
+  --on-primary: #ffffff;
+
+  /* status fills (always paired with icon + label) and AA text inks */
+  --st-good: #3aa86a;
+  --st-good-ink: #1d6b40;
+  --st-progress: #2a6fbf;
+  --st-progress-ink: #1f5a9e;
+  --st-review: #9b4f96;
+  --st-review-ink: #7d3a78;
+  --st-due: #c98a00;
+  --st-due-ink: #7a5300;
+  --st-bad: #b3261e;
+  --st-bad-ink: #9e1f18;
+
+  /* type */
+  --font-ui: 'Anek Latin Variable', 'Anek Kannada Variable', 'Anek Devanagari Variable', system-ui,
+    sans-serif;
+  --font-kn: 'Anek Kannada Variable', 'Anek Latin Variable', system-ui, sans-serif;
+  --font-hi: 'Anek Devanagari Variable', 'Anek Latin Variable', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 16px;
+  --fs-lg: 20px;
+  --fs-xl: 28px;
+
+  /* shape: radius by hierarchy */
+  --r-tile: 3px;
+  --r-control: 6px;
+  --r-panel: 8px;
+  --r-sheet: 12px;
+  --shadow-float: 0 8px 24px rgba(12, 46, 35, 0.16), 0 1px 2px rgba(12, 46, 35, 0.12);
+}
+
+/* Staff PWA: larger base type and touch targets (ui-direction §4, §5). */
+:root[data-app='staff'] {
+  --fs-xs: 14px;
+  --fs-sm: 15px;
+  --fs-base: 17px;
+  --fs-md: 19px;
+  --fs-lg: 22px;
+}
+
+:root[lang='kn'] body {
+  font-family: var(--font-kn);
+  line-height: 1.55;
+}
+:root[lang='hi'] body {
+  font-family: var(--font-hi);
+  line-height: 1.55;
+}
+
+/* Dark theme: wall-TV operations board only (decision 8). */
+[data-theme='tv'] {
+  color-scheme: dark;
+  --bg: #0c2e23;
+  --surface: #10382b;
+  --surface-sunk: #0a261d;
+  --border: #1f4d3d;
+  --ink: #e9efe9;
+  --ink-2: #9fb3a9;
+  --st-good: #38aa6b;
+  --st-progress: #4e8dd8;
+  --st-review: #b46db3;
+  --st-due: #c08812;
+  --st-bad: #d03f37;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: 1.45;
+  font-variation-settings: 'wdth' 100;
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

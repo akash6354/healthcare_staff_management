@@ -1,0 +1,52 @@
+/** Tailwind preset: every colour, font, radius maps to a CSS variable in src/tokens.css. */
+module.exports = {
+  theme: {
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      white: '#ffffff',
+      ward: 'var(--ward-green)',
+      tile: 'var(--tile-green)',
+      deep: 'var(--deep-tile)',
+      gilt: 'var(--gilt)',
+      brass: 'var(--brass)',
+      palegilt: 'var(--pale-gilt)',
+      cream: 'var(--cream-dot)',
+      bg: 'var(--bg)',
+      surface: 'var(--surface)',
+      sunk: 'var(--surface-sunk)',
+      line: 'var(--border)',
+      linestrong: 'var(--border-strong)',
+      ink: 'var(--ink)',
+      ink2: 'var(--ink-2)',
+      good: { DEFAULT: 'var(--st-good)', ink: 'var(--st-good-ink)' },
+      progress: { DEFAULT: 'var(--st-progress)', ink: 'var(--st-progress-ink)' },
+      review: { DEFAULT: 'var(--st-review)', ink: 'var(--st-review-ink)' },
+      due: { DEFAULT: 'var(--st-due)', ink: 'var(--st-due-ink)' },
+      bad: { DEFAULT: 'var(--st-bad)', ink: 'var(--st-bad-ink)' },
+    },
+    fontFamily: {
+      ui: 'var(--font-ui)',
+      mono: 'var(--font-mono)',
+    },
+    fontSize: {
+      xs: 'var(--fs-xs)',
+      sm: 'var(--fs-sm)',
+      base: 'var(--fs-base)',
+      md: 'var(--fs-md)',
+      lg: 'var(--fs-lg)',
+      xl: 'var(--fs-xl)',
+    },
+    borderRadius: {
+      none: '0',
+      tile: 'var(--r-tile)',
+      control: 'var(--r-control)',
+      panel: 'var(--r-panel)',
+      sheet: 'var(--r-sheet)',
+      full: '9999px',
+    },
+    extend: {
+      boxShadow: { float: 'var(--shadow-float)' },
+    },
+  },
+};

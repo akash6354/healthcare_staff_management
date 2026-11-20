@@ -106,6 +106,16 @@ async def my_tasks(db: DB, access: Access = Depends(requires(Perm.task_view))) -
     return (await db.scalars(stmt)).all()
 
 
+@router.get("/me/desks")
+async def my_desks(db: DB, access: Access = Depends(requires(Perm.task_view))) -> Any:
+    """Desks I'm rostered to today (shown in the staff app header)."""
+    ids = await svc.my_desk_ids(db, access.principal.user_id, svc.today_ist())
+    if not ids:
+        return []
+    desks = (await db.scalars(select(Desk).where(Desk.id.in_(ids)).order_by(Desk.code))).all()
+    return [{"id": str(d.id), "name": d.name, "code": d.code} for d in desks]
+
+
 @router.post("/tasks", response_model=sc.TaskOut, status_code=201)
 async def create_one_time(
     body: sc.OneTimeTaskIn, db: DB, access: Access = Depends(requires(Perm.task_create))

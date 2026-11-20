@@ -208,7 +208,9 @@ async def add_proof(
     if phase == ProofPhase.after:
         has_before = await db.scalar(
             select(func.count()).where(
-                TaskProof.task_id == task.id, TaskProof.phase == ProofPhase.before
+                TaskProof.task_id == task.id,
+                TaskProof.phase == ProofPhase.before,
+                TaskProof.server_received_at >= task.started_at,
             )
         )
         if task.requires_before_photo and not has_before:
@@ -250,9 +252,11 @@ async def submit_task(
     ]
     if missing:
         raise AppError("CHECKLIST_INCOMPLETE", 422, missing=missing)
-    phases = set(
-        (await db.scalars(select(TaskProof.phase).where(TaskProof.task_id == task.id))).all()
+    # Only photos from this attempt count: after a rejection the worker must take new ones.
+    this_attempt = select(TaskProof.phase).where(
+        TaskProof.task_id == task.id, TaskProof.server_received_at >= task.started_at
     )
+    phases = set((await db.scalars(this_attempt)).all())
     if task.requires_before_photo and ProofPhase.before not in phases:
         raise AppError("BEFORE_PHOTO_REQUIRED", 422)
     if task.requires_after_photo and ProofPhase.after not in phases:

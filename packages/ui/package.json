@@ -1,0 +1,21 @@
+{
+  "name": "@oglos/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"(no tests yet)\""
+  },
+  "dependencies": {
+    "@fontsource-variable/anek-latin": "5.3.0",
+    "@fontsource-variable/anek-kannada": "5.3.0",
+    "@fontsource-variable/anek-devanagari": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "lucide-react": "0.468.0"
+  },
+  "peerDependencies": { "react": "^18.3.1" },
+  "devDependencies": { "@types/react": "18.3.12", "typescript": "5.6.3" }
+}

@@ -171,6 +171,28 @@ async def test_reject_sends_back_for_rework(client, hospital_a: Tenant) -> None:
     assert any(n["kind"] == "task_rejected" for n in notes)
 
 
+async def test_rework_needs_fresh_photos_and_checklist(client, hospital_a: Tenant) -> None:
+    s = await setup_desk(client, hospital_a)
+    task = await one_time_task(client, s)
+    w, tid = s.worker.headers, task["id"]
+    await client.post(f"/api/v1/tasks/{tid}/start", headers=w)
+    await photo(client, s.worker, tid, "before", jpeg((5, 5, 5)))
+    await photo(client, s.worker, tid, "after", jpeg((6, 6, 6)))
+    await client.post(f"/api/v1/tasks/{tid}/submit", json={"checklist": {"floor": True}}, headers=w)
+    await client.post(
+        f"/api/v1/tasks/{tid}/reject", json={"note": "Redo"}, headers=s.supervisor.headers
+    )
+    detail = (await client.get(f"/api/v1/tasks/{tid}", headers=w)).json()
+    assert detail["checklist_result"] is None
+    await client.post(f"/api/v1/tasks/{tid}/start", headers=w)
+    again = await client.post(
+        f"/api/v1/tasks/{tid}/submit", json={"checklist": {"floor": True}}, headers=w
+    )
+    assert again.json()["error"]["code"] == "BEFORE_PHOTO_REQUIRED"
+    late_after = await photo(client, s.worker, tid, "after", jpeg((7, 7, 7)))
+    assert late_after.json()["error"]["code"] == "BEFORE_PHOTO_FIRST"
+
+
 async def test_worker_off_desk_cannot_see_or_act(client, hospital_a: Tenant) -> None:
     s = await setup_desk(client, hospital_a)
     task = await one_time_task(client, s)

@@ -79,6 +79,7 @@ async def transition(
         if action == Action.reject:
             task.rework_count += 1
             task.started_at = task.started_by = task.submitted_at = task.submitted_by = None
+            task.checklist_result = None  # rework needs a fresh checklist and fresh photos
             task.sla_state = SlaState.overdue if now > task.due_at else SlaState.on_time
     await session.flush()
     await session.execute(text("SELECT set_config('app.task_sm', 'off', true)"))

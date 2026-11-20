@@ -147,12 +147,14 @@ class HospitalUpdate(In):
 
 
 class BuildingIn(In):
+    branch_id: uuid.UUID | None = None
     name: str = Name
     code: str = Code
     sort: int = 0
 
 
 class BuildingPatch(In):
+    branch_id: uuid.UUID | None = None
     name: str | None = Field(None, min_length=1, max_length=120)
     code: str | None = Field(None, min_length=1, max_length=32)
     sort: int | None = None
@@ -160,6 +162,7 @@ class BuildingPatch(In):
 
 class BuildingOut(Out):
     id: uuid.UUID
+    branch_id: uuid.UUID | None
     name: str
     code: str
     sort: int
