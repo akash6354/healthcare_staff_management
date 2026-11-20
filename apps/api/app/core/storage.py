@@ -40,13 +40,17 @@ warnings.simplefilter("error", Image.DecompressionBombWarning)  # refuse, don't 
 @lru_cache
 def s3() -> Any:
     s = get_settings()
+    # Empty values mean "use the AWS instance role" (production); keys are for local S3 only.
+    local = bool(s.s3_endpoint_url)
     return boto3.client(
         "s3",
-        endpoint_url=s.s3_endpoint_url,
-        aws_access_key_id=s.s3_access_key,
-        aws_secret_access_key=s.s3_secret_key,
+        endpoint_url=s.s3_endpoint_url or None,
+        aws_access_key_id=s.s3_access_key or None,
+        aws_secret_access_key=s.s3_secret_key or None,
         region_name=s.s3_region,
-        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+        config=Config(
+            signature_version="s3v4", s3={"addressing_style": "path" if local else "virtual"}
+        ),
     )
 
 

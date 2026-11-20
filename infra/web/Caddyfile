@@ -1,0 +1,52 @@
+# Production web front: automatic HTTPS (Let's Encrypt), security headers, both SPAs, /api proxy.
+{
+	email {$ACME_EMAIL}
+	servers {
+		protocols h1 h2 h3
+	}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), geolocation=(), microphone=()"
+		# Photos load from the private S3 bucket through short-lived signed URLs.
+		Content-Security-Policy "default-src 'self'; img-src 'self' blob: data: {$S3_PUBLIC_ORIGIN}; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self'"
+		-Server
+	}
+	handle /api/* {
+		request_body {
+			max_size 15MB
+		}
+		reverse_proxy api:8000
+	}
+	# OpenAPI docs are disabled in production by the API itself.
+}
+
+# Desktop admin, supervisor and MD screens
+{$ADMIN_HOST} {
+	import common
+	handle {
+		root * /srv/admin
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Staff mobile PWA
+{$STAFF_HOST} {
+	import common
+	handle /sw.js {
+		root * /srv/staff
+		header Cache-Control "no-cache"
+		file_server
+	}
+	handle {
+		root * /srv/staff
+		try_files {path} /index.html
+		file_server
+	}
+}

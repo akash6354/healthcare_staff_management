@@ -1,6 +1,7 @@
 # Env & secrets
 .env
 .env.*
+!.env.production.example
 !.env.example
 *.pem
 *.key
@@ -35,3 +36,4 @@ Thumbs.db
 # Local data
 infra/data/
 *.log
+.env.production

@@ -468,3 +468,17 @@ async def test_cross_tenant_on_remaining_endpoints(
     assert (await client.get(f"/api/v1/task-templates/{tpl['id']}", headers=a)).json()[
         "active"
     ] is True
+
+
+async def test_missed_tasks_still_escalate_to_md(client, hospital_a: Tenant) -> None:
+    """A task late at 23:30 becomes 'missed' at midnight but must still reach the MD."""
+    s = await setup_desk(client, hospital_a)
+    task = await one_time_task(client, s, due_in_minutes=1)
+    due = datetime.fromisoformat(task["due_at"])
+    async with tenant_session(hospital_a.id) as db:
+        await sla_sweep(db, hospital_a.id, now=due + timedelta(minutes=5))
+        await sla_sweep(db, hospital_a.id, now=due + timedelta(days=1, minutes=5))  # next day
+        row = (await db.scalars(select(Task).where(Task.id == task["id"]))).one()
+    assert row.sla_state.value == "missed" and row.escalation_level == 2
+    md_notes = (await client.get("/api/v1/notifications", headers=s.md.headers)).json()
+    assert any(n["kind"] == "task_escalated" for n in md_notes)

@@ -443,9 +443,8 @@ async def sla_sweep(
     due = (
         await db.scalars(
             select(Task)
-            .where(
-                Task.status.in_(OPEN_STATES), Task.due_at <= now, Task.sla_state != SlaState.missed
-            )
+            # missed tasks keep escalating: a task late at 23:30 must still reach the MD after midnight
+            .where(Task.status.in_(OPEN_STATES), Task.due_at <= now)
             .with_for_update(skip_locked=True)
         )
     ).all()
@@ -465,7 +464,8 @@ async def sla_sweep(
         if desk and role:
             ids = await users_with_role_for_desk(db, [role], desk)
             await notify(db, hospital_id, ids, "task_escalated", t.id, level=level.level)
-        await set_sla(db, t, SlaState.overdue, SYSTEM, level=level.level)
+        keep = SlaState.missed if t.sla_state == SlaState.missed else SlaState.overdue
+        await set_sla(db, t, keep, SYSTEM, level=level.level)
         stats["escalated"] += 1
     return stats
 

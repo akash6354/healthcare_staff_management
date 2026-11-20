@@ -34,8 +34,26 @@ class ConsoleEmailAdapter:
 
 
 class SesEmailAdapter:
-    async def send(self, message: EmailMessage) -> None:  # pragma: no cover - Phase 6
-        raise NotImplementedError("SES adapter is configured at deployment (decision G1)")
+    """AWS SES v2 in ap-south-1 (decision G1). Credentials come from the instance role, never code."""
+
+    async def send(self, message: EmailMessage) -> None:  # pragma: no cover - needs AWS
+        import asyncio
+
+        import boto3
+
+        settings = get_settings()
+        client = boto3.client("sesv2", region_name=settings.aws_ses_region)
+        await asyncio.to_thread(
+            client.send_email,
+            FromEmailAddress=settings.email_from,
+            Destination={"ToAddresses": [message.to]},
+            Content={
+                "Simple": {
+                    "Subject": {"Data": message.subject, "Charset": "UTF-8"},
+                    "Body": {"Text": {"Data": message.body, "Charset": "UTF-8"}},
+                }
+            },
+        )
 
 
 def email_adapter() -> EmailAdapter:
