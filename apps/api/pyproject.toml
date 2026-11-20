@@ -1,0 +1,64 @@
+[project]
+name = "oglos-api"
+version = "0.1.0"
+description = "OGLOS Hospital Operations & Accountability Platform: API and worker"
+requires-python = ">=3.12,<3.13"
+# Dependency justifications (all MIT/BSD/Apache-2.0/ISC/Unlicense; no GPL/AGPL):
+dependencies = [
+  "fastapi==0.115.6",            # MIT  - web framework (stack)
+  "uvicorn[standard]==0.32.1",   # BSD  - ASGI server
+  "sqlalchemy[asyncio]==2.0.36", # MIT  - ORM (stack)
+  "asyncpg==0.30.0",             # Apache-2.0 - async Postgres driver
+  "alembic==1.14.0",             # MIT  - migrations (stack)
+  "pydantic==2.10.3",            # MIT  - validation (stack)
+  "pydantic-settings==2.6.1",    # MIT  - env-based config
+  "email-validator==2.2.0",      # Unlicense - email field validation for pydantic
+  "argon2-cffi==23.1.0",         # MIT  - argon2id password/PIN hashing (security.md)
+  "pyjwt[crypto]==2.10.1",       # MIT  - access tokens
+  "cryptography==44.0.0",        # Apache-2.0/BSD - AES-GCM field encryption, HMAC
+  "pyotp==2.9.0",                # MIT  - TOTP 2FA
+  "redis==5.2.1",                # MIT  - rate limiting + Celery broker
+  "celery==5.4.0",               # BSD  - jobs (stack)
+  "python-multipart==0.0.19",    # Apache-2.0 - multipart form parsing (FastAPI uploads)
+  "httpx==0.28.1",               # BSD  - outbound HTTP (breached-password check) and tests
+]
+
+[dependency-groups]
+dev = [
+  "pytest==8.3.4",               # MIT
+  "pytest-asyncio==1.1.0",       # Apache-2.0
+  "ruff==0.8.4",                 # MIT
+  "mypy==1.13.0",                # MIT
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF", "SIM"]
+ignore = ["B008", "E501", "RUF001"]  # Depends() defaults are idiomatic; formatter owns line length; Indic text is intentional
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+"alembic/**" = ["E501"]
+"app/modules/*/schemas.py" = ["RUF012"]  # pydantic copies field defaults
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["app.modules.*.service", "app.audit.*", "app.policy.*", "app.core.*"]
+strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]

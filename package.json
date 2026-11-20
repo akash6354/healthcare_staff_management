@@ -1,0 +1,18 @@
+{
+  "name": "oglos-hoap",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev:admin": "pnpm --filter @oglos/web-admin dev",
+    "dev:pwa": "pnpm --filter @oglos/staff-pwa dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint && prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "3.3.3"
+  }
+}

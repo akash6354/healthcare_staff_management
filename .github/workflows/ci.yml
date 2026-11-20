@@ -1,0 +1,70 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.4-alpine
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: ci-superuser, POSTGRES_DB: oglos }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7.4-alpine
+        ports: ["6379:6379"]
+    env:
+      DATABASE_URL: postgresql+asyncpg://oglos_app:ci-app@localhost:5432/oglos
+      MIGRATIONS_DATABASE_URL: postgresql+asyncpg://oglos_owner:ci-owner@localhost:5432/oglos
+      PLATFORM_DATABASE_URL: postgresql+asyncpg://oglos_platform:ci-platform@localhost:5432/oglos
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SIGNING_KEY: ci-only-signing-key-not-secret
+      FIELD_ENCRYPTION_KEYS: v1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      HMAC_LOOKUP_KEY: ci-only-lookup-key-not-secret
+      QR_SIGNING_KEYS: v1:ci-only-qr-key
+      OTP_HMAC_KEY: ci-only-otp-key-not-secret
+    defaults: { run: { working-directory: apps/api } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with: { version: "0.5.11" }
+      - name: Create database roles
+        env: { PGPASSWORD: ci-superuser }
+        run: |
+          export OGLOS_OWNER_PASSWORD=ci-owner OGLOS_APP_PASSWORD=ci-app OGLOS_PLATFORM_PASSWORD=ci-platform
+          sed 's/--username postgres/-h localhost --username postgres/' ../../infra/postgres/init/01-roles.sh | sh
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy app
+      - run: uv run pytest -q
+      - name: Dependency audit
+        run: uvx pip-audit==2.7.3 --strict -r <(uv export --frozen --no-dev --no-hashes)
+
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
+      - run: pnpm -r build
+      - run: pnpm audit --audit-level high
+
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
