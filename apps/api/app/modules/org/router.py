@@ -12,8 +12,10 @@ from app.modules.org import schemas as sc
 from app.modules.org.models import (
     Area,
     AreaType,
+    Branch,
     Building,
     Department,
+    Desk,
     Floor,
     Hospital,
     HospitalModule,
@@ -133,5 +135,20 @@ router.include_router(
         create_schema=sc.AreaIn, update_schema=sc.AreaPatch, read_schema=sc.AreaOut,
         view_perm=Perm.org_view, manage_perm=Perm.org_manage, order_by=("code",),
         filters=("floor_id", "department_id", "area_type_id"),
+    )
+)  # fmt: skip
+router.include_router(
+    crud_router(
+        model=Branch, path="/branches", entity="branch",
+        create_schema=sc.BranchIn, update_schema=sc.BranchPatch, read_schema=sc.BranchOut,
+        view_perm=Perm.org_view, manage_perm=Perm.org_manage, order_by=("name",),
+    )
+)  # fmt: skip
+router.include_router(
+    crud_router(
+        model=Desk, path="/desks", entity="desk",
+        create_schema=sc.DeskIn, update_schema=sc.DeskPatch, read_schema=sc.DeskOut,
+        view_perm=Perm.org_view, manage_perm=Perm.org_manage, order_by=("code",),
+        filters=("branch_id", "department_id", "floor_id"),
     )
 )  # fmt: skip

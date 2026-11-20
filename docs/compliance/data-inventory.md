@@ -13,15 +13,19 @@ Retention values are the defaults from `decisions.md` (decision 23), configurabl
 | Employee code | users | login (PIN), anonymised label | employment | as above; kept as the pseudonym after erasure | admins, supervisors | — |
 | Work email | users | OTP login, notifications | employment | active + 1 year | admins; self | unique per hospital |
 | Phone (optional) | users | contact by supervisors, future SMS | employment | active + 1 year | `staff.manage` holders (others see a masked value) | AES-GCM field encryption + HMAC lookup hash |
+| Emergency contact (optional, "name, phone") | users.emergency_contact_enc | reach family in an on-duty emergency | employment | active + 1 year | `staff.manage` holders only | AES-GCM field encryption |
+| Joining date, branch | users | roster planning, records for the hospital | employment | active + 1 year | admins, supervisors | — |
+| Desk assignment per shift | roster_entries | who owns a desk's tasks (desk-wise model) | employment | 3 years | supervisors+, self | — |
 | Role, department, employment type, agency/vendor | users, user_roles | access control, contractor vs employee records (Labour Codes) | employment | active + 1 year | admins | — |
-| Shift check-ins (time, method, area) | shift_checkins | attendance accuracy for the hospital | employment | 3 years (audit) | admins, dept head, self | append-only |
+| Entrance check-ins (time, branch, method = QR) | shift_checkins | attendance accuracy for the hospital | employment | 3 years (audit) | admins, dept head, self | append-only |
 | QR scan events (time, area) | qr_scans | proof of presence at the task location, at scan time only | employment | 3 years | supervisors+, self | append-only; **no GPS** |
 | Task actions & audit events | audit_events | accountability, NABH documentation support | employment / legal obligation of the hospital | 3 years | in scope; quality coordinator | hash chain; ids only, no names |
-| Evidence photos | evidence (S3) | proof of work | employment | 18 months, then purged | in scope | private bucket, signed URLs, EXIF stripped |
+| Before/after photos (~200 KB, watermarked) | task_proofs (S3) | proof of work | employment | full photo 90 days, then thumbnail + record (decision H8) | in scope | private bucket, signed URLs, EXIF stripped |
 | Scorecards (derived) | computed | performance feedback | employment | follows the source data | self, supervisor+, MD | — |
 | Password / PIN / TOTP secret | credentials | authentication | necessary for the service | until changed or erased | nobody (hashes / encrypted) | argon2id / AES-GCM |
 | Session metadata (UA summary, IP hash) | sessions | security, "log out all devices" | security | 90 days | self, admins | IP stored as a salted hash |
 | Push subscription endpoint | push_subscriptions | in-app notifications | consent (browser prompt) | until unsubscribed or erased | nobody | keys encrypted |
+| Fake-work flags (rule, details) | task_flags | catch unverified work; always reviewed by a human, never auto-penalised | employment | 3 years | supervisors+; staff see and can appeal their own | — |
 | Privacy notice acknowledgement | notice_acknowledgements | proof notice was given | DPDP s.5 | 3 years after exit | admins | append-only |
 | **Public reporter phone (optional)** | public_reports | follow up on the reported issue | **Consent** (s.6), explicit checkbox, versioned notice | 90 days (proposed, see open questions) | supervisors+ handling the report (masked by default) | AES-GCM; never shown on the TV board |
 | Public reporter IP | public_reports | abuse prevention | legitimate use / security | 30 days as a salted hash | nobody (automated) | hash only |

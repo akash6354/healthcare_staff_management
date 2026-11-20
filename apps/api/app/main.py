@@ -1,5 +1,6 @@
 """FastAPI application: routers, error handlers, request ids and security headers."""
 
+import asyncio
 import logging
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -15,10 +16,13 @@ from app.core.config import get_settings
 from app.core.db import dispose_engines
 from app.core.errors import AppError, app_error_handler
 from app.core.logging import configure_logging, request_id_var
+from app.core.storage import ensure_bucket
+from app.modules.attendance.router import router as attendance_router
 from app.modules.auth.router import me_router
 from app.modules.auth.router import router as auth_router
 from app.modules.org.router import router as org_router
 from app.modules.staff.router import router as staff_router
+from app.modules.tasks.router import router as tasks_router
 from app.policy.deps import assert_all_routes_declared, public
 
 log = logging.getLogger("oglos.api")
@@ -34,6 +38,11 @@ _PG_ERRORS = {
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     assert_all_routes_declared(app)
+    if not get_settings().is_production:
+        try:
+            await asyncio.to_thread(ensure_bucket)
+        except Exception:  # storage may start after the API in dev
+            log.warning("could not ensure S3 bucket at startup")
     yield
     await dispose_engines()
 
@@ -118,6 +127,8 @@ def create_app() -> FastAPI:
     api.include_router(me_router)
     api.include_router(org_router)
     api.include_router(staff_router)
+    api.include_router(tasks_router)
+    api.include_router(attendance_router)
     app.include_router(api)
     return app
 

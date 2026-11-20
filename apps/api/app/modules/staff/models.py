@@ -93,6 +93,7 @@ class User(IdMixin, TenantMixin, TimestampMixin, Base):
         tenant_fk("agency_id", "agencies"),
         tenant_fk("vendor_id", "vendors"),
         tenant_fk("department_id", "departments"),
+        tenant_fk("branch_id", "branches"),
         UniqueConstraint("hospital_id", "employee_code"),
         Index(
             "uq_users_hospital_email",
@@ -123,6 +124,11 @@ class User(IdMixin, TenantMixin, TimestampMixin, Base):
     agency_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     vendor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     department_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    branch_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    joining_date: Mapped[date | None] = mapped_column(Date)
+    emergency_contact_enc: Mapped[bytes | None] = mapped_column(
+        LargeBinary
+    )  # "name, phone", encrypted
     status: Mapped[UserStatus] = mapped_column(
         str_enum(UserStatus, "user_status"), nullable=False, default=UserStatus.active
     )
@@ -163,11 +169,13 @@ class RosterEntry(IdMixin, TenantMixin, TimestampMixin, Base):
         tenant_fk("user_id", "users"),
         tenant_fk("shift_id", "shifts"),
         tenant_fk("department_id", "departments"),
+        tenant_fk("desk_id", "desks"),
         UniqueConstraint("hospital_id", "user_id", "shift_id", "work_date"),
     )
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, index=True)
     shift_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     work_date: Mapped[date] = mapped_column(Date, nullable=False)
+    desk_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
     department_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     zone_area_ids: Mapped[list[uuid.UUID]] = mapped_column(
         ARRAY(Uuid), nullable=False, default=list
@@ -182,8 +190,10 @@ class ShiftCheckin(IdMixin, TenantMixin, Base):
         tenant_fk("user_id", "users"),
         tenant_fk("roster_entry_id", "roster_entries"),
         tenant_fk("area_id", "areas"),
+        tenant_fk("branch_id", "branches"),
     )
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, index=True)
+    branch_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     roster_entry_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     kind: Mapped[str] = mapped_column(String(12), nullable=False)  # check_in | check_out
     method: Mapped[CheckinMethod] = mapped_column(

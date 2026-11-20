@@ -21,6 +21,10 @@ dependencies = [
   "celery==5.4.0",               # BSD  - jobs (stack)
   "python-multipart==0.0.19",    # Apache-2.0 - multipart form parsing (FastAPI uploads)
   "httpx==0.28.1",               # BSD  - outbound HTTP (breached-password check) and tests
+  "pillow==11.0.0",              # MIT-CMU - photo re-encode, EXIF strip, ~200 KB compression, watermark
+  "boto3==1.35.81",              # Apache-2.0 - S3 storage for photo proof (SeaweedFS locally)
+  "tzdata==2024.2",              # Apache-2.0 - IANA time zones (Asia/Kolkata) on Windows
+  "qrcode==8.0",                 # BSD  - entrance / door QR images (server-rendered SVG)
 ]
 
 [dependency-groups]

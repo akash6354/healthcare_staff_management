@@ -98,3 +98,23 @@ audit_events(id, hospital_id, seq, actor_id, actor_role, task_id, entity_type='t
 - Each guard has a positive and a negative test.
 - Property test: random action sequences never reach a state outside the diagram, and the audit chain verifies afterwards.
 - SLA: freeze time; check that at-risk, overdue, escalation levels and the hold pause fire exactly once even when two workers sweep at the same time.
+
+## 5. Desk-wise pilot lifecycle (implemented, decision H3)
+
+The Olympus pilot uses a simpler lifecycle on the same rules (only `tasks/state_machine.py` writes `status`;
+a DB trigger rejects any other write; every transition is audited):
+
+```mermaid
+stateDiagram-v2
+  [*] --> pending: created from template / one-time
+  pending --> in_progress: start (on the desk's roster today)
+  in_progress --> submitted: submit (required checklist + before/after photos)
+  submitted --> approved: approve (supervisor, not the submitter)
+  submitted --> pending: reject (reason required, rework_count + 1, worker notified)
+  pending --> cancelled: cancel (reason)
+  in_progress --> cancelled: cancel (reason)
+```
+
+SLA track (`sla_state`, written by `set_sla`): `on_time → overdue` at `due_at` (level 1: supervisor notified) → level 2 after
+60 min (MD notified) per `settings.escalation.chain`; open tasks from a previous day become `missed`. Submit sets `met` or `late`.
+The assignment-based lifecycle in sections 1–4 is the target for later modules (maintenance, requests).

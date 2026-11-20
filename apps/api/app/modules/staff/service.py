@@ -66,6 +66,8 @@ def to_out(user: User, roles: Sequence[UserRole], viewer: Access) -> UserOut:
         phone = decrypt_field(user.phone_enc)
         can_see = resolve_access(viewer.principal, Perm.staff_manage) is not None
         out.phone = phone if can_see else mask_phone(phone)
+    if user.emergency_contact_enc and resolve_access(viewer.principal, Perm.staff_manage):
+        out.emergency_contact = decrypt_field(user.emergency_contact_enc)
     return out
 
 
@@ -82,8 +84,10 @@ async def roles_by_user(
 async def create_user(db: AsyncSession, access: Access, body: UserIn) -> User:
     _check_department_in_scope(access, body.department_id)
     _check_grants(access, body.roles)
-    data = body.model_dump(exclude={"roles", "phone"})
+    data = body.model_dump(exclude={"roles", "phone", "emergency_contact"})
     user = User(hospital_id=access.principal.hospital_id, **data)
+    if body.emergency_contact:
+        user.emergency_contact_enc = encrypt_field(body.emergency_contact)
     if body.phone:
         user.phone_enc = encrypt_field(body.phone)
         user.phone_hash = lookup_hash(body.phone)
@@ -109,8 +113,12 @@ async def update_user(db: AsyncSession, access: Access, user: User, body: UserPa
         user.phone_enc = encrypt_field(phone) if phone else None
         user.phone_hash = lookup_hash(phone) if phone else None
         changes["phone"] = "***"
+    if "emergency_contact" in changes:
+        ec = changes.pop("emergency_contact")
+        user.emergency_contact_enc = encrypt_field(ec) if ec else None
+        changes["emergency_contact"] = "***"
     for key, value in changes.items():
-        if key != "phone":
+        if key not in ("phone", "emergency_contact"):
             setattr(user, key, value)
     await db.flush()
     await record(

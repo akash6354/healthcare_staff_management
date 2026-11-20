@@ -70,10 +70,12 @@ def resolve_access(principal: Principal, perm: Perm) -> Access | None:
         level = ROLE_PERMISSIONS.get(grant.role, {}).get(perm)
         if level is None:
             continue
-        # A role scoped narrower than its permission level narrows the grant.
-        if grant.scope_type == ScopeType.department and level > Scope.department:
+        # The role assignment decides the zone: a department-scoped supervisor covers that whole
+        # department; an area-scoped one only those areas. Hospital-wide permissions are narrowed
+        # to the assignment; self-only permissions never widen.
+        if grant.scope_type == ScopeType.department and level >= Scope.area:
             level = Scope.department
-        if grant.scope_type == ScopeType.area and level > Scope.area:
+        if grant.scope_type == ScopeType.area and level >= Scope.area:
             level = Scope.area
         if grant.scope_type == ScopeType.vendor:
             level = Scope.vendor

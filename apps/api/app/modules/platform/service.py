@@ -22,6 +22,8 @@ from app.modules.org.models import (
     RiskLevel,
 )
 from app.modules.org.schemas import HospitalSettingsV1
+from app.modules.platform.notice import DEFAULT_NOTICE
+from app.modules.tasks.models import PrivacyNotice
 
 PLATFORM = Actor(None, "platform_admin")
 
@@ -78,6 +80,7 @@ async def _apply_template_pack(s: AsyncSession, hid: uuid.UUID, modules: list[Mo
                 hospital_id=hid, key=key, name_i18n=names, default_risk=risk, evidence_rules=rules
             )
         )
+    s.add(PrivacyNotice(hospital_id=hid, version=1, body_i18n=DEFAULT_NOTICE))
     await s.flush()
     await record(
         s, hospital_id=hid, actor=PLATFORM, entity_type="hospital", entity_id=hid,

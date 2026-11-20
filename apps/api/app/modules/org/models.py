@@ -95,9 +95,22 @@ class HospitalModule(TenantMixin, Base):
     )
 
 
+class Branch(IdMixin, TenantMixin, TimestampMixin, Base):
+    """A physical site of the hospital (Olympus has two). Entrance QR attendance is per branch."""
+
+    __tablename__ = "branches"
+    __tenant_args__ = (UniqueConstraint("hospital_id", "code"),)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    code: Mapped[str] = mapped_column(String(24), nullable=False)
+    address_line: Mapped[str | None] = mapped_column(String(200))
+    entrance_qr_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Building(IdMixin, TenantMixin, TimestampMixin, Base):
     __tablename__ = "buildings"
-    __tenant_args__ = (UniqueConstraint("hospital_id", "code"),)
+    __tenant_args__ = (UniqueConstraint("hospital_id", "code"), tenant_fk("branch_id", "branches"))
+    branch_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     code: Mapped[str] = mapped_column(String(24), nullable=False)
     sort: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -162,4 +175,27 @@ class Area(IdMixin, TenantMixin, TimestampMixin, Base):
     grid_y: Mapped[int | None] = mapped_column(Integer)
     grid_w: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     notes: Mapped[str | None] = mapped_column(Text)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Desk(IdMixin, TenantMixin, TimestampMixin, Base):
+    """A work point (Reception Desk 1, Ward 3 Nurse Station, Housekeeping Floor 2).
+
+    Tasks belong to desks, not people; the roster puts people on desks per shift (decision H3).
+    """
+
+    __tablename__ = "desks"
+    __tenant_args__ = (
+        tenant_fk("branch_id", "branches"),
+        tenant_fk("department_id", "departments"),
+        tenant_fk("floor_id", "floors"),
+        tenant_fk("area_id", "areas"),
+        UniqueConstraint("hospital_id", "code"),
+    )
+    branch_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, index=True)
+    department_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    floor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    area_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    code: Mapped[str] = mapped_column(String(32), nullable=False)
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

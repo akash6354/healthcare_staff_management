@@ -47,6 +47,9 @@ class UserIn(In):
     agency_id: uuid.UUID | None = None
     vendor_id: uuid.UUID | None = None
     department_id: uuid.UUID | None = None
+    branch_id: uuid.UUID | None = None
+    joining_date: date | None = None
+    emergency_contact: str | None = Field(None, max_length=120)
     roles: list[RoleGrantIn] = Field(min_length=1, max_length=10)
 
 
@@ -56,6 +59,9 @@ class UserPatch(In):
     phone: str | None = Field(None, pattern=PHONE_PATTERN)
     preferred_language: Language | None = None
     department_id: uuid.UUID | None = None
+    branch_id: uuid.UUID | None = None
+    joining_date: date | None = None
+    emergency_contact: str | None = Field(None, max_length=120)
 
 
 class UserOut(Out):
@@ -69,6 +75,9 @@ class UserOut(Out):
     agency_id: uuid.UUID | None
     vendor_id: uuid.UUID | None
     department_id: uuid.UUID | None
+    branch_id: uuid.UUID | None
+    joining_date: date | None
+    emergency_contact: str | None = None  # staff.manage only
     status: UserStatus
     roles: list[RoleGrantOut] = []
 
@@ -151,6 +160,7 @@ class RosterIn(In):
     user_id: uuid.UUID
     shift_id: uuid.UUID
     work_date: date
+    desk_id: uuid.UUID | None = None
     department_id: uuid.UUID | None = None
     zone_area_ids: list[uuid.UUID] = Field(default_factory=list, max_length=200)
 
@@ -160,6 +170,7 @@ class RosterOut(Out):
     user_id: uuid.UUID
     shift_id: uuid.UUID
     work_date: date
+    desk_id: uuid.UUID | None
     department_id: uuid.UUID | None
     zone_area_ids: list[uuid.UUID]
 
