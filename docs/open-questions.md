@@ -1,10 +1,14 @@
 # Open questions
 
-Most questions were decided on 2026-11-20 (see `decisions.md` section G). Only items that need a real-world fact from the owner remain.
+Decided items live in `decisions.md` (sections G and H). Only facts the owner must supply remain here.
 
 | # | Area | Question | Until answered |
 |---|---|---|---|
-| 1 | Compliance | **Named data-protection & security-incident contact** (name, email, phone) for the privacy notice, `SECURITY.md` and CERT-In 6-hour reporting. | `TODO` placeholders; **blocks go-live** |
-| 2 | Brand | SVG logos (full colour, white, mono, icon-only) and a light-background logo without the tile. | Use the PNGs in `/media` |
-| 3 | Exports | Sample NABH FMS/HIC registers from a real hospital to match the formats exactly. | Generic registers (decision G22) |
-| 4 | Accounts | Domain DNS, AWS account, SES sending domain verification. | Mock/console providers |
+| 1 | Compliance | **Named data-protection & security-incident contact** (name, email, phone) for the staff notice, `SECURITY.md` and CERT-In reporting. | `TODO` placeholders; **blocks go-live** |
+| 2 | Olympus pilot | Branch names, floors, and the housekeeping **desk list** (e.g. "Housekeeping Floor 2") for the pilot branch. | Admin enters them on Monday through the setup screens |
+| 3 | Olympus pilot | Staff list for housekeeping (names, employee codes, supervisor, MD), and whether each has an email or will use a shared phone + PIN. | Shared device + PIN for staff; email + password + TOTP for MD/admin |
+| 4 | Olympus pilot | Photo retention agreed with Olympus (default 90 days full, then thumbnail). | 90 days |
+| 5 | Olympus pilot | Where the entrance check-in QR will be placed (printed sheet vs tablet). | Printed QR per branch entrance |
+| 6 | Hosting | Production server for Monday (AWS Mumbai account, domain DNS for app.oglos.site, email sending). | Must exist before Monday handover |
+| 7 | Brand | SVG logos; light-background logo without the tile. | PNGs in `/media` |
+| 8 | Exports | Sample NABH registers from Olympus to match formats. | Generic registers |

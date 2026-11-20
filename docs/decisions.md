@@ -99,3 +99,24 @@ Each is a per-hospital default unless stated. Reasoning in brackets.
 | G22 | NABH exports v1 | Daily cleaning register, inspection register, work-order log, SLA summary (PDF + CSV). Refine with a real hospital's registers later. |
 | G23 | Backup region | AWS ap-south-2 (Hyderabad). |
 | G24 | Local dev tooling | `make` targets wrap plain commands; on Windows without make, `scripts/dev.ps1` exposes the same targets. |
+
+## H. Product plan v1.0 (owner's PDF, 20 Nov 2026), which overrides earlier sections where they differ
+Summary in `docs/product-plan.md`.
+| # | Decision |
+|---|---|
+| H1 | **Stack stays FastAPI + PostgreSQL** (owner's choice, 20 Nov). The PDF's Frappe proposal is not used. Future ERPNext / Marley Health / Frappe HR (GPL-3.0) would integrate through APIs as separate services, never linked into our code (rule 9). |
+| H2 | **First pilot: Olympus Hospital, Bangalore** (two branches). Handover **Mon 23 Nov 2026**: housekeeping, one branch, 14-day free pilot, then paid plan or data return + deletion. Replaces decision 1 "no pilot"; the platform stays generic and configurable. |
+| H3 | **Desk-wise model:** tasks belong to desks; the roster assigns people to desks per shift; "Going out" cover moves a desk's open tasks temporarily. |
+| H4 | **Branches** are a first-class level: hospital (tenant) → branch → building → floor → area/desk. Roles and dashboards can be scoped by branch. |
+| H5 | **Tiers Base / Pro / Premium** with a per-feature on/off switch (Plan Settings); changing tier is a setting, not code. Replaces per-module pricing (decision 5). |
+| H6 | **Escalation default:** supervisor → MD, in-app (replaces decision 19's 4-level default; the chain stays configurable). |
+| H7 | **Notifications:** in-app + web push; no SMS/WhatsApp. Email is used for sign-in codes and is optional for summaries. |
+| H8 | **Photo proof:** before + after photos, in-app camera only, server time, reference outline, compressed to ~150–200 KB. **Retention default:** full photo 90 days, then thumbnail + task record (replaces 18 months; per-hospital setting, agreed per client and stated in the notice). |
+| H9 | **Attendance:** QR check-in/out at the entrance (Base); rotating 30-second QR on a tablet (Pro). No biometrics, no GPS. |
+| H10 | **In scope, previously excluded:** leave management (apply/approve/balance/calendar), shift swaps, notices, shift handover. Payroll stays out. |
+| H11 | **Staff profile** adds joining date, emergency contact (encrypted), branch, status active / on leave / left. |
+| H12 | **Fake-work detector:** rule-based flags (too-fast close, duplicate photo hash, far-apart areas a minute apart, bulk close at shift end). Every flag goes to a human; staff see their own score and can appeal. |
+| H13 | **Sign-off:** supervisor approves/rejects; optionally the next person (e.g. ward nurse) confirms the room is ready. |
+| H14 | **Exit export:** OGLOS super-admin only; ZIP (Excel + photos + PDF summary); audited; data deleted after client confirmation; delivered within 7 days of request. |
+| H15 | **Kannada and Hindi voice and picture screens** for staff (recorded audio + pictograms), part of Base. |
+| H16 | **Roles for the pilot:** MD (management viewer + escalation target), admin, supervisor, staff (worker). Other roles stay available. |
