@@ -14,8 +14,12 @@ the dashboard loads.
 2. Fill the two prompted values:
    `QR_SIGNING_KEYS` = `v1:` + `python -c "import secrets;print(secrets.token_urlsafe(32))"`,
    `FIELD_ENCRYPTION_KEYS` = `v1:` + `python -c "import os,base64;print(base64.b64encode(os.urandom(32)).decode())"`.
-3. Deploy. On first start the log shows `bootstrap ok`, migrations, and the **demo logins** (admin/MD
-   TOTP secrets, shared-phone device key). Copy them from the Logs tab.
+3. Deploy. On first start the log shows `bootstrap ok`, migrations, and the demo logins. They are the fixed
+   ones in `TESTING.md` (MD/admin codes: `python scripts/demo-code.py md|admin`).
+
+> Those demo logins are public. Anyone who finds your `onrender.com` URL can sign in and change the **demo** data
+> (there's no real data in it). Share the link only with people you're demoing to, and redeploy with a fresh
+> database to reset.
 4. Open `https://<service>.onrender.com/` (admin) and `/staff/` (phone). Demo steps: README.
 
 ## Known limits

@@ -15,6 +15,9 @@ There are two apps:
 This version is a **prototype** with made-up demo data (the "Sunrise Multispeciality" hospital).
 No real staff or patient data belongs in it.
 
+> **Just want to try it?** Start it (section 3A), then follow **[TESTING.md](TESTING.md)**: every login and a
+> step-by-step walkthrough for each role.
+
 ---
 
 ## 1. What you need on this computer (one time)
@@ -80,29 +83,16 @@ Stop each with `Ctrl + C`.
 
 ## 4. Test users
 
-The **hospital code** is `SUNRISE` everywhere. The two versions above have **separate** demo data, each with its own
-logins. The fixed parts are the same; the device key and authenticator secrets are printed when the demo data is
-created (the `seed` step or `run-render-local.ps1`).
+Full list and walkthroughs: **[TESTING.md](TESTING.md)**. The logins are fixed (the same after every reset):
 
-| Role | How they sign in | Login |
+| Role | Where | Login |
 |---|---|---|
-| **MD** | Admin site → email + password + 6-digit authenticator code | `md@sunrise.example.org` / `sunrise-demo-2026` |
-| **Admin** | Admin site → email + password + 6-digit authenticator code | `admin@sunrise.example.org` / `sunrise-demo-2026` |
-| **Supervisor** | Admin site → email + password | `supervisor@sunrise.example.org` / `sunrise-demo-2026` |
-| **Staff (shared phone)** | Staff app → *Use the shared phone and PIN* → enter the **device key** once → employee code + PIN | codes `HK-101` … `HK-106`, PIN `4826` |
-| **Staff (own email)** | Staff app → email → 6-digit code | `hk-101@sunrise.example.org` … `hk-106@…` |
+| **MD** | admin site | `md@sunrise.example.org` / `sunrise-demo-2026` + code from `python scripts/demo-code.py md` |
+| **Admin** | admin site | `admin@sunrise.example.org` / `sunrise-demo-2026` + code from `python scripts/demo-code.py admin` |
+| **Supervisor** | admin site | `supervisor@sunrise.example.org` / `sunrise-demo-2026` |
+| **Staff** | staff app | *Use the shared phone and PIN* → device key `SUNRISE-DEMO-SHARED-PHONE-01` → `HK-101` … `HK-106`, PIN `4826` |
 
-**Getting the MD / admin 6-digit code.** Add the printed **TOTP secret** to an authenticator app (Google or
-Microsoft Authenticator → "enter a setup key"). Or print a code (valid 30 seconds):
-
-```powershell
-cd apps\api; uv run python -c "import pyotp;print(pyotp.TOTP('PASTE-THE-SECRET').now())"
-```
-
-**Lost the logins?** Run the seed again: it doesn't change anything, it just prints them
-(`scripts\dev.ps1 seed` for B; for A run `docker logs oglos-render-test`). The device key is only shown when it is
-created. If you've lost it, reset the demo data (section 7) to get a new one, or sign staff in with their email
-instead. (A *Devices* screen in the admin site is still to be built.)
+Hospital code everywhere: `SUNRISE`.
 
 ## 5. Where do the email sign-in codes go?
 

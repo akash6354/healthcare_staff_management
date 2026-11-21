@@ -12,6 +12,8 @@ docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis 
 Start-Sleep -Seconds 3
 
 Write-Host "2/4 Preparing a separate database for the Render copy..."
+# Stop the old copy first: Postgres refuses to drop a database that is still in use.
+docker rm -f oglos-render-test 2>$null | Out-Null
 $sql = @"
 DO `$`$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'render_owner') THEN

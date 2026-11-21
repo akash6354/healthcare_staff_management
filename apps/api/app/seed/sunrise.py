@@ -16,23 +16,26 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
-import pyotp
 from PIL import Image, ImageDraw
-from sqlalchemy import select
+from sqlalchemy import select, update
 
-from app.core.crypto import decrypt_field
+from app.core.crypto import decrypt_field, token_hash
 from app.core.db import dispose_engines, platform_session, tenant_session
 from app.main import app
 from app.modules.auth.models import Credential
 from app.modules.auth.service import _create_session, set_password, set_pin
 from app.modules.org.models import Hospital
 from app.modules.platform.service import create_hospital
-from app.modules.staff.models import EmploymentType, Role, ScopeType, User, UserRole
+from app.modules.staff.models import Device, EmploymentType, Role, ScopeType, User, UserRole
 from app.modules.tasks.service import today_ist
 
 CODE = "SUNRISE"
 PASSWORD = os.environ.get("SEED_PASSWORD", "sunrise-demo-2026")  # demo only, never production
 PIN = "4826"
+# Fixed, publicly documented demo credentials (TESTING.md) so guides and resets stay in sync.
+# Synthetic data only: the seed refuses to run when APP_ENV=production.
+DEMO_TOTP = {"admin": "OGLOSADMINSUNRISEDEMOKEYAAAAAAAA", "md": "OGLOSMDSUNRISEDEMOKEYAAAAAAAAAAA"}
+DEMO_DEVICE_KEY = "SUNRISE-DEMO-SHARED-PHONE-01"
 
 # Synthetic names (not real people).
 WORKERS = [
@@ -72,7 +75,7 @@ class Seeder:
     async def user(
         self, code: str, name: str, roles: list[tuple[Role, ScopeType, uuid.UUID | None]], *,
         email: str | None = None, lang: str = "en", dept: uuid.UUID | None = None,
-        branch: uuid.UUID | None = None, password: bool = False, pin: bool = False, totp: bool = False,
+        branch: uuid.UUID | None = None, password: bool = False, pin: bool = False, totp: str | None = None,
     ) -> tuple[uuid.UUID, str | None]:  # fmt: skip
         async with tenant_session(self.hid) as s:
             u = User(
@@ -98,7 +101,7 @@ class Seeder:
             if totp:
                 from app.core.crypto import encrypt_field
 
-                secret = pyotp.random_base32()
+                secret = totp
                 cred = await s.get(Credential, u.id)
                 assert cred is not None  # noqa: S101 - seed script
                 cred.totp_secret_enc = encrypt_field(secret)
@@ -135,7 +138,7 @@ async def seed() -> None:
     async with httpx.AsyncClient(transport=transport, base_url="https://seed") as c:
         sd = Seeder(c, h.id)
         admin, admin_totp = await sd.user("ADM-001", "Priya Nair (Admin)", [(Role.hospital_admin, ScopeType.hospital, None)],
-                                          email="admin@sunrise.example.org", password=True, totp=True)  # fmt: skip
+                                          email="admin@sunrise.example.org", password=True, totp=DEMO_TOTP["admin"])  # fmt: skip
         A = admin
         main = await sd.post(
             A,
@@ -189,7 +192,7 @@ async def seed() -> None:
         )]  # fmt: skip
 
         md, md_totp = await sd.user("MD-001", "Dr. Arvind Rao (MD)", [(Role.management_viewer, ScopeType.hospital, None)],
-                                    email="md@sunrise.example.org", password=True, totp=True)  # fmt: skip
+                                    email="md@sunrise.example.org", password=True, totp=DEMO_TOTP["md"])  # fmt: skip
         sup, _ = await sd.user("SUP-001", "Kavitha S (Supervisor)", [(Role.supervisor, ScopeType.department, uuid.UUID(hk["id"]))],
                                email="supervisor@sunrise.example.org", dept=uuid.UUID(hk["id"]), password=True)  # fmt: skip
         await sd.user("NUR-301", "Sister Mary J (Ward 3)", [(Role.requester, ScopeType.department, uuid.UUID(nursing["id"]))],
@@ -201,6 +204,13 @@ async def seed() -> None:
                                    branch=uuid.UUID(main["id"]), pin=True)  # fmt: skip
             worker_ids.append(uid)
         device = await sd.post(A, "/devices", {"label": "Housekeeping shared phone (demo)"})
+        async with tenant_session(h.id) as s:  # fixed documented key instead of the random one
+            await s.execute(
+                update(Device)
+                .where(Device.id == device["id"])
+                .values(device_key_hash=token_hash(DEMO_DEVICE_KEY))
+            )
+        device["device_key"] = DEMO_DEVICE_KEY
 
         day = today_ist().isoformat()
         for uid, label in zip(worker_ids, ["G", "1", "2", "3", "4", "B1"], strict=True):
@@ -279,10 +289,10 @@ Seeded demo hospital SUNRISE ({hid}). Synthetic data only.
   Staff app   http://localhost:5174
     Email code  hk-101@sunrise.example.org ... hk-106 (code is printed in the API console in dev)
     Shared phone PIN {PIN} with employee code HK-101 ... HK-106
-    Device key  {device_key or "(already registered: register a new one under Devices)"}
+    Device key  {device_key or DEMO_DEVICE_KEY}
 
-  Add the TOTP secrets to any authenticator app, or run:
-    uv run python -c "import pyotp;print(pyotp.TOTP('<secret>').now())"
+  Current MD / admin code:  python scripts/demo-code.py md   (or: admin)
+  Full walkthrough: TESTING.md
 """)
 
 
