@@ -204,6 +204,8 @@ export const en = {
   'common.no_patient_details': "Don't enter patient details.",
   'login.delete_digit': 'Delete last digit',
   'nav.main': 'Main menu',
+  'login.pin_hint': '4 to 6 digits',
+  'login.pin_entered': '{count} digits entered',
 } as const;
 
 export type MessageKey = keyof typeof en;

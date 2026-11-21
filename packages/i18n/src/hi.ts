@@ -206,4 +206,6 @@ export const hi: Record<MessageKey, string> = {
   'common.no_patient_details': 'मरीज़ की जानकारी न लिखें।',
   'login.delete_digit': 'आख़िरी अंक मिटाएँ',
   'nav.main': 'मुख्य मेनू',
+  'login.pin_hint': '4 से 6 अंक',
+  'login.pin_entered': '{count} अंक डाले गए',
 };

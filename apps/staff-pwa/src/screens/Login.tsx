@@ -215,13 +215,17 @@ function PinLogin({ onEmail, onReset }: { onEmail: () => void; onReset: () => vo
         required
       />
       <div className="mt-5">
-        <div className="mb-2 text-sm font-semibold">{t('login.pin')}</div>
+        <div className="mb-2 flex items-baseline justify-between">
+          <span className="text-sm font-semibold">{t('login.pin')}</span>
+          <span className="text-sm text-ink2">{t('login.pin_hint')}</span>
+        </div>
+        {/* PINs are 4-6 digits: show 4 circles, growing as more digits are typed. */}
         <div
           aria-live="polite"
           className="mb-3 flex h-8 items-center justify-center gap-3"
-          aria-label={`${pin.length} / 6`}
+          aria-label={t('login.pin_entered', { count: pin.length })}
         >
-          {Array.from({ length: 6 }, (_, i) => (
+          {Array.from({ length: Math.max(4, pin.length) }, (_, i) => (
             <span
               key={i}
               className={`h-3.5 w-3.5 rounded-full ${i < pin.length ? 'bg-ward' : 'border-2 border-linestrong'}`}

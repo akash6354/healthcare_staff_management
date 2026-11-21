@@ -206,4 +206,6 @@ export const kn: Record<MessageKey, string> = {
   'common.no_patient_details': 'ರೋಗಿಯ ವಿವರಗಳನ್ನು ಬರೆಯಬೇಡಿ.',
   'login.delete_digit': 'ಕೊನೆಯ ಅಂಕಿ ಅಳಿಸಿ',
   'nav.main': 'ಮುಖ್ಯ ಮೆನು',
+  'login.pin_hint': '4 ರಿಂದ 6 ಅಂಕಿಗಳು',
+  'login.pin_entered': '{count} ಅಂಕಿ ನಮೂದಿಸಲಾಗಿದೆ',
 };
